@@ -33,6 +33,18 @@ Paste this to it (Claude, Grok, DeepSeek, Gemini, Copilot…):
 
 [AGENTS.md](AGENTS.md) is written for them; `crowbar-check --handout` gives them a plan for your runtime specifically, with files and line numbers. They never publish anything: you review the diff and release.
 
+## Testing in Crowbar
+
+Crowbar has a hidden developer mode. Enter the Konami code anywhere in Crowbar, with a controller or the keyboard: **↑ ↑ ↓ ↓ ← → ← → B A** (on a keyboard, B and A or Esc and Enter). **Settings › Developer** then lets you:
+
+- point Crowbar at your local runtime folder (it replaces the installed runtime for the games your `crowbar.json` declares);
+- see whether your `crowbar.json` is valid and what it declares;
+- watch launches and trophies arrive live;
+- simulate a trophy notification;
+- copy a catalog entry prefilled from the game's `param.sfo`.
+
+The same code hides it again.
+
 ## What is inside
 
 | Path | For |

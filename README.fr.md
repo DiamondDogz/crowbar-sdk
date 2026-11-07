@@ -32,6 +32,10 @@ Collez-lui ceci (Claude, Grok, DeepSeek, Gemini, Copilot…) :
 
 [AGENTS.md](AGENTS.md) est écrit pour elles ; `crowbar-check --handout` leur donne un plan pour votre runtime précis, avec fichiers et numéros de ligne. Elles ne publient jamais rien : vous relisez le diff et publiez.
 
+## Tester dans Crowbar
+
+Crowbar a un mode développeur caché. Entrez le code Konami n'importe où dans Crowbar, à la manette ou au clavier : **↑ ↑ ↓ ↓ ← → ← → B A** (au clavier, B et A ou Échap et Entrée). **Paramètres › Développeur** permet alors de pointer votre runtime local, de voir si votre `crowbar.json` est valide, de suivre les lancements et les trophées en direct, de simuler une notification de trophée et de copier une fiche catalogue préremplie. Le même code le cache à nouveau.
+
 La spécification complète, les outils et les exemples sont décrits dans le [README anglais](README.md) et dans [SPEC.md](SPEC.md).
 
 ## Licence

@@ -70,6 +70,8 @@ crowbar-fake . --simulate 14             # writes trophy 14 where Crowbar reads 
 
 You cannot play the game; ask the developer to unlock one trophy and paste what `crowbar-fake` printed.
 
+If the developer uses Crowbar itself to test: the Konami code (↑ ↑ ↓ ↓ ← → ← → B A) unlocks **Settings › Developer**, where they can point Crowbar at the local runtime folder and watch trophies arrive live.
+
 ## 5. Hand over
 
 Show the developer the full diff and a short summary: files added, lines changed, what `crowbar-check` says. Mention anything you guessed. Then stop.

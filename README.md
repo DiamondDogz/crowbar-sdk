@@ -16,7 +16,9 @@
 - **Backups** of your data folder, and **useful bug reports**: launch log and system info, copied in one click.
 - Windows and Linux, controller first.
 
-## What you do (about an hour)
+## What you do
+
+A few minutes of changes with an AI assistant (a bit more by hand), then a rebuild and one trophy in game to check it works.
 
 1. Call `crowbar_unlock(id)` where your runtime handles `sceNpTrophyUnlockTrophy`.
 2. Ship a `crowbar.json` at the root of your release: name, CUSA ids, launch command.

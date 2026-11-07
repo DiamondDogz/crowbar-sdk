@@ -15,7 +15,9 @@
 - **DLC et mises à jour du jeu** lus dans leurs `.pkg` ; vous ne recevez que ceux à installer.
 - **Sauvegardes** de votre dossier de données, et **rapports de bug utiles** : journal de lancement et infos système, copiés en un clic.
 
-## Ce que vous faites (environ une heure)
+## Ce que vous faites
+
+Quelques minutes de modifications avec un assistant IA (un peu plus à la main), puis une recompilation et un trophée en jeu pour vérifier que tout marche.
 
 1. Appeler `crowbar_unlock(id)` là où votre runtime gère `sceNpTrophyUnlockTrophy`.
 2. Livrer un `crowbar.json` à la racine de votre release : nom, CUSA, commande de lancement.

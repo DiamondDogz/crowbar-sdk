@@ -344,6 +344,7 @@ def run(path: Path, write_proposal: bool = False) -> dict:
             "root": str(path),
             "layout": layout,
             "manifest": m is not None,
+            "manifestData": m,
             "trophies": {k: sources.get(k) for k in ("handler", "file", "line", "param", "wired", "build", "glob")},
             "errors": [f.as_dict() for f in report.errors],
             "warnings": [f.as_dict() for f in report.warnings],

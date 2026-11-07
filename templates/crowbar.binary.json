@@ -1,0 +1,13 @@
+{
+  "$schema": "https://raw.githubusercontent.com/DiamondDogz/crowbar-sdk/main/schema/crowbar.schema.json",
+  "crowbar": 1,
+  "name": "My Game PS4RT",
+  "game": "my-game",
+  "titleIds": ["CUSA00000"],
+  "launch": {
+    "windows": ["bin/ps4rt.exe", "--game", "{game}"],
+    "linux": ["bin/ps4rt", "--game", "{game}"]
+  },
+  "data": "user",
+  "features": { "trophies": true }
+}

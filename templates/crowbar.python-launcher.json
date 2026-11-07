@@ -1,0 +1,18 @@
+{
+  "$schema": "https://raw.githubusercontent.com/DiamondDogz/crowbar-sdk/main/schema/crowbar.schema.json",
+  "crowbar": 1,
+  "name": "My Game PS4RT",
+  "game": "my-game",
+  "titleIds": ["CUSA00000"],
+  "launch": {
+    "windows": ["python/python.exe", "scripts/ps4rt_launch.py", "--game", "{game}", "--data-dir", "{data}"],
+    "linux": ["python3", "scripts/ps4rt_launch.py", "--game", "{game}", "--data-dir", "{data}"]
+  },
+  "data": "out/{titleId}",
+  "settings": "{data}/ps4rt.ini",
+  "features": {
+    "trophies": true,
+    "dlc": ["--dlc-pkg", "{file}"],
+    "noDialogs": ["--no-dialogs"]
+  }
+}

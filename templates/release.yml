@@ -1,0 +1,31 @@
+# Example GitHub Actions workflow for a runtime repository: on a tag, check the runtime with
+# crowbar-check, pack it, and publish the archive with its .sha256 next to it (what the catalog reads).
+# Copy to .github/workflows/release.yml and adapt the build and the packed folder.
+name: Release
+on:
+  push:
+    tags: ['v*']
+permissions:
+  contents: write
+jobs:
+  linux:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build
+        run: ./build.sh            # your build; it must produce dist/ with crowbar.json at its root
+      - uses: actions/setup-python@v5
+        with: { python-version: '3.12' }
+      - name: Check with crowbar-check
+        run: |
+          pip install git+https://github.com/DiamondDogz/crowbar-sdk
+          crowbar-check dist
+      - name: Pack
+        run: |
+          name="my-game-ps4rt-linux-x86_64-${GITHUB_REF_NAME}.tar.gz"
+          tar -czf "$name" -C dist .
+          sha256sum "$name" > "$name.sha256"
+      - name: Publish
+        env: { GH_TOKEN: '${{ github.token }}' }
+        run: gh release create "$GITHUB_REF_NAME" *.tar.gz *.tar.gz.sha256 --generate-notes

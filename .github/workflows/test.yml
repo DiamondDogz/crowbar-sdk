@@ -1,0 +1,30 @@
+name: Tests
+on:
+  push:
+  pull_request:
+jobs:
+  test:
+    strategy:
+      fail-fast: true
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        python: ['3.9', '3.13']
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: '${{ matrix.python }}' }
+      - name: Unit tests
+        run: python -m unittest discover -s tests -v
+      - name: Install and run the tools
+        run: |
+          pip install .
+          crowbar-check --version
+          crowbar-fake --version
+          python -c "import json; json.load(open('schema/crowbar.schema.json'))"
+      - name: Build the C helper with the system compiler (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          for std in c99 c11; do gcc -std=$std -Wall -Wextra -Werror -c sdk/c/crowbar.c -o /tmp/c.o; done
+          g++ -std=c++17 -Wall -Werror -x c++ -c sdk/c/crowbar.c -o /tmp/cpp.o

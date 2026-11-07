@@ -1,0 +1,17 @@
+# crowbar-sdk
+
+> Public format and tools to make a PS4RT runtime (a native port of a PS4 game) compatible with the Crowbar launcher: trophies, profile, catalog downloads and updates. MIT licence. No Crowbar code inside.
+
+An AI assistant asked to make a runtime Crowbar compatible should follow AGENTS.md: run `crowbar-check . --handout`, add `crowbar.json` and a `crowbar_unlock(id)` call in the sceNpTrophyUnlockTrophy handler, repeat `crowbar-check . --json` until `"ok": true`, then show the diff without publishing anything.
+
+## Docs
+
+- [AGENTS.md](https://github.com/DiamondDogz/crowbar-sdk/blob/main/AGENTS.md): step-by-step procedure and rules for AI assistants
+- [SPEC.md](https://github.com/DiamondDogz/crowbar-sdk/blob/main/SPEC.md): crowbar.json, the trophy file, environment variables, catalog entry
+- [README.md](https://github.com/DiamondDogz/crowbar-sdk/blob/main/README.md): overview for developers
+
+## Code
+
+- [sdk/c/crowbar.h](https://github.com/DiamondDogz/crowbar-sdk/blob/main/sdk/c/crowbar.h) and [crowbar.c](https://github.com/DiamondDogz/crowbar-sdk/blob/main/sdk/c/crowbar.c): `crowbar_unlock(id)` in C99
+- [sdk/python/crowbar.py](https://github.com/DiamondDogz/crowbar-sdk/blob/main/sdk/python/crowbar.py): the same in Python
+- [schema/crowbar.schema.json](https://github.com/DiamondDogz/crowbar-sdk/blob/main/schema/crowbar.schema.json): JSON Schema of crowbar.json

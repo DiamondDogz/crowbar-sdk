@@ -103,6 +103,8 @@ index.tsv   one line per trophy: 3-digit number, grade, name, description (tab s
 
 Grades are `P`, `G`, `S`, `B`; texts are on one line. This is the format the Kagekidan and Ravn launchers already read.
 
+A runtime **without** its own card needs nothing: Crowbar shows its own trophy banner over the game (top right, borderless window), with the name and icon read from the dump. Players can set that banner to Automatic (only when the runtime has no card), Always or Never.
+
 ## 3. Environment
 
 Crowbar adds these variables. Read the ones you need, ignore the rest.

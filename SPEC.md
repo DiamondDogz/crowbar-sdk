@@ -55,12 +55,46 @@ At the root of the runtime, the folder players unpack from your release.
 | `settings` | no | The `.ini` Crowbar manages from its graphics settings screen. Without it, Crowbar writes no settings file |
 | `backup` | no | What Crowbar's backups take. Default: `data` up to its first placeholder (`out/{titleId}` → `out`) |
 | `features` | no | What the runtime can do, with the arguments to add (§4) |
+| `options` | no | The settings Crowbar's settings screen shows for this runtime: keys and values of the `settings` file (below) |
 
 **Paths** are relative to the folder that holds `crowbar.json`, use `/`, and never leave it (`..` and absolute paths are refused). A program with a `/` is a file in the runtime; a bare name (`python3`) is looked up in the PATH. Crowbar always starts the command **from the runtime root** (working directory).
 
 **Placeholders** in `launch`: `{game}` (the dump folder), `{data}` (the data folder, absolute), `{titleId}`, `{runtime}` (the root, absolute). In `features`: `{file}` (a `.pkg`) and `{dir}` (an extracted update). In `data` and `settings`: `{titleId}`, and `{data}` in `settings`.
 
 **Unknown keys** are ignored, so a newer runtime still runs on an older Crowbar.
+
+### Settings screen (optional, `options`)
+
+With `settings`, Crowbar has a settings screen for the game. `options` says what it shows, so it always matches **this version** of the runtime: when an update adds a resolution or a new setting, the player sees it as soon as the update is installed, without a new Crowbar.
+
+```json
+"settings": "{data}/ps4rt.ini",
+"options": [
+  {
+    "key": "output_res",
+    "label": { "en": "Output resolution", "fr": "Résolution de sortie" },
+    "hint": { "en": "Size of the image sent to the screen" },
+    "values": [["1920x1080", "1080p"], ["2560x1440", "1440p"], ["3840x2160", "4K"]],
+    "default": "1920x1080"
+  },
+  {
+    "key": "vsync",
+    "label": "Vertical sync",
+    "values": [["0", { "en": "Off", "fr": "Désactivée" }], ["1", { "en": "On", "fr": "Activée" }]],
+    "default": "1"
+  }
+]
+```
+
+| Field | Meaning |
+| --- | --- |
+| `key` | The key in the `.ini` (`key=value` lines). Letters, digits, `_`, `.`, `-` |
+| `label` | What the player reads. A text (English), or `{"en": ..., "fr": ..., "ja": ...}` with at least `en` |
+| `hint` | Optional line under the label, same form |
+| `values` | At least two `[value, label]` pairs, in the order shown. The value is written to the `.ini` as is |
+| `default` | The value the runtime uses when the key is missing. Must be one of `values` |
+
+Crowbar writes only the keys the player changed and keeps every other line of the file. Declare what a player should change, read from the code that parses the `.ini`; leave internal or debug keys out. Without `options`, Crowbar falls back to the list in the [catalog](https://github.com/DiamondDogz/crowbar-catalog) entry (`"options": {"windows": [...], "linux": [...]}`, same items, kept by the catalog maintainers for runtimes that do not declare theirs), then to its own built-in list.
 
 ## 2. Trophies
 

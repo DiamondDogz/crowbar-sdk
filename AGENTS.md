@@ -31,6 +31,7 @@ Create it at the root of what players unpack. Start from the handout's proposal 
 - `launch`: run the exact command the runtime's own launcher or README uses. One argument per string, `{game}` where the dump folder goes. A Windows release usually ships its Python (`python/python.exe`); Linux uses `python3`.
 - `data`: where the runtime keeps saves and settings. Only add `settings` if Crowbar should manage that `.ini`.
 - `features`: declare only what the runtime really supports. Check each flag in its argument parser before adding `dlc`, `updatePkg`, `updateFolder` or `noDialogs`.
+- `options` (with `settings`): the settings Crowbar shows for this runtime. Read the code that parses the `.ini`: each key, the values it accepts, the default when the key is missing. Declare what a player should change (resolution, display mode, upscaler, frame rate…), with English labels and French if you can. Never invent a key or a value the code does not accept. When the runtime gains an option later, adding it here is all it takes: Crowbar follows. Format: SPEC.md, settings screen.
 
 If the source tree is not what players unpack (a build step produces the release), `crowbar.json` must end up at the root of the **release archive**: add it to the packaging script, and say so to the developer.
 

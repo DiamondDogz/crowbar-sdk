@@ -302,6 +302,24 @@ def check_trophy_files(root: Path, report: Report) -> None:
                     report.add("warning", "trophyfile.date", f'{r}: trophy {k} has the date "{v}".', "Use ISO 8601 in UTC, e.g. 2026-11-07T10:42:13Z.", r)
 
 
+def find_ini_keys(root: Path) -> list[str]:
+    """Keys of a sample settings file shipped with the runtime (ps4rt.ini, *.ini.example…), to help declare `options`."""
+    keys: list[str] = []
+    for pat in ("ps4rt.ini", "ps4rt.ini.example", "ps4rt.example.ini", "*/ps4rt.ini", "config/*.ini", "*.ini.example"):
+        for f in sorted(root.glob(pat)):
+            try:
+                text = f.read_text(encoding="utf-8", errors="replace")
+            except OSError:
+                continue
+            for line in text.splitlines():
+                line = line.strip()
+                if line and not line.startswith(("#", ";", "[")) and "=" in line:
+                    k = line.split("=", 1)[0].strip()
+                    if k and k not in keys:
+                        keys.append(k)
+    return keys[:200]
+
+
 def run(path: Path, write_proposal: bool = False) -> dict:
     root, tmp = open_runtime(path)
     try:
@@ -336,9 +354,22 @@ def run(path: Path, write_proposal: bool = False) -> dict:
             report.add("info", "trophies.no-handler", "No sceNpTrophyUnlockTrophy handler found in the sources.", "If the runtime handles trophies elsewhere, call crowbar_unlock(id) there.")
         elif feats.get("trophies"):
             report.add("info", "trophies.binary", "No sources here (a release?): trophy recording cannot be checked statically.", "Run crowbar-fake with a dump to see unlocks arrive.")
+        # Réglages : un runtime qui a un .ini géré par Crowbar devrait décrire ses options.
+        base = m or proposal or {}
+        ini_keys = find_ini_keys(root)
+        if base.get("settings") and not base.get("options"):
+            report.add("warning", "options.missing", "crowbar.json has \"settings\" but no \"options\": Crowbar shows its own built-in list, which may not match this runtime.",
+                       "Declare every setting the runtime reads from its .ini under \"options\" (SPEC.md, settings screen).", "crowbar.json")
+        elif isinstance(base.get("options"), list) and ini_keys:
+            declared = {o.get("key") for o in base["options"] if isinstance(o, dict)}
+            missing = [k for k in ini_keys if k not in declared]
+            if missing:
+                report.add("info", "options.undeclared", "Keys found in the runtime's .ini but not in \"options\": " + ", ".join(missing[:20]) + ".",
+                           "Declare those a player should change; leave internal ones out.", "crowbar.json")
         check_forbidden(root, report)
         check_trophy_files(root, report)
         return {
+            "iniKeys": ini_keys,
             "ok": not report.errors,
             "checker": __version__,
             "root": str(path),
@@ -405,6 +436,13 @@ def handout(r: dict) -> str:
     elif not t["handler"] and not t["wired"]:
         steps.append("Find where the runtime answers `sceNpTrophyUnlockTrophy` (usually a table of HLE exports) and call "
                      "`crowbar_unlock(id)` there with the trophy id the game passes. If the runtime has no such handler yet, stop and ask the developer.")
+    if "options.missing" in codes or ("manifest.missing" in codes and (r["proposal"] or {}).get("settings")):
+        found = r.get("iniKeys") or []
+        steps.append("Describe the runtime's settings in `crowbar.json` under `\"options\"`, so Crowbar's settings screen shows exactly "
+                     "what this version supports (and follows its updates). Read the code that parses the `.ini` (the argument or key names, "
+                     "the accepted values, the default used when a key is missing); declare only what a player should change. Format: SPEC.md, "
+                     "settings screen. Labels in English, with French too if you can (`{\"en\": ..., \"fr\": ...}`). Never invent a value the code does not accept."
+                     + (" Keys found in the shipped `.ini`: " + ", ".join("`" + k + "`" for k in found[:30]) + "." if found else ""))
     if any(f["code"].startswith("release.") for f in r["errors"]):
         steps.append("Remove from the runtime and its release every file listed under `release.*` in `crowbar-check --json`. "
                      "Ask the developer before deleting anything that is not obviously a game file.")

@@ -20,7 +20,7 @@ FEATURE_ARGS = {
     "updateFolder": "{dir}",
     "noDialogs": None,
 }
-KNOWN_KEYS = {"$schema", "crowbar", "name", "game", "titleIds", "requiredVersion", "launch", "data", "settings", "backup", "features"}
+KNOWN_KEYS = {"$schema", "crowbar", "name", "game", "titleIds", "requiredVersion", "launch", "data", "settings", "backup", "features", "options"}
 
 
 @dataclass
@@ -157,6 +157,8 @@ def validate(m: dict, root: Path, report: Report) -> None:
     if b is not None and not _str_list(b):
         report.add("error", "backup.invalid", '"backup" must be a list of paths.', "", F)
 
+    check_options(m, report)
+
     feats = m.get("features", {})
     if not isinstance(feats, dict):
         report.add("error", "features.invalid", '"features" must be an object.', "", F)
@@ -224,3 +226,55 @@ def environment(m: dict, root: Path, game: Path, title_id: str, crowbar_version:
     if lang_code:
         env["PS4RT_TROPHY_LANG"] = lang_code
     return env
+
+
+OPTION_KEY = re.compile(r"^[A-Za-z0-9_.\-]+$")
+
+
+def _text(v) -> bool:
+    """A label: a string, or an object of language code to string with at least "en"."""
+    if isinstance(v, str):
+        return bool(v.strip())
+    return isinstance(v, dict) and bool(v) and all(isinstance(k, str) and isinstance(t, str) and t.strip() for k, t in v.items()) and "en" in v
+
+
+def check_options(m: dict, report: Report) -> None:
+    """`options`: the settings Crowbar shows for this runtime (keys and values of its .ini)."""
+    F = "crowbar.json"
+    opts = m.get("options")
+    if opts is None:
+        return
+    if not isinstance(opts, list):
+        report.add("error", "options.invalid", '"options" must be a list.', "See SPEC.md, settings screen.", F)
+        return
+    if not m.get("settings"):
+        report.add("error", "options.settings", '"options" needs "settings": Crowbar writes the chosen values to that .ini.', 'Add "settings", e.g. "{data}/ps4rt.ini".', F)
+    seen = set()
+    for i, o in enumerate(opts):
+        where = f'"options[{i}]"'
+        if not isinstance(o, dict):
+            report.add("error", "options.item", f"{where} must be an object.", "", F)
+            continue
+        key = o.get("key")
+        if not isinstance(key, str) or not OPTION_KEY.match(key):
+            report.add("error", "options.key", f"{where}: \"key\" must be the .ini key (letters, digits, _ . -).", "", F)
+        elif key in seen:
+            report.add("error", "options.duplicate", f'Option "{key}" is declared twice.', "", F)
+        else:
+            seen.add(key)
+        if not _text(o.get("label")):
+            report.add("error", "options.label", f'{where}: "label" must be a text, or {{"en": ..., "fr": ...}} with at least "en".', "", F)
+        if "hint" in o and not _text(o["hint"]):
+            report.add("error", "options.hint", f'{where}: "hint" must be a text, or {{"en": ...}}.', "", F)
+        values = o.get("values")
+        ok = isinstance(values, list) and len(values) >= 2 and all(isinstance(v, list) and len(v) == 2 and isinstance(v[0], str) and _text(v[1]) for v in values)
+        if not ok:
+            report.add("error", "options.values", f'{where}: "values" must list at least two ["value", "label"] pairs, values as strings.', 'For example [["1920x1080", "1080p"], ["3840x2160", "4K"]].', F)
+            continue
+        vals = [v[0] for v in values]
+        if len(set(vals)) != len(vals):
+            report.add("error", "options.values-duplicate", f"{where}: a value appears twice.", "", F)
+        d = o.get("default")
+        if not isinstance(d, str) or d not in vals:
+            report.add("error", "options.default", f'{where}: "default" must be one of its values, as a string.', "Use the value the runtime uses when the key is missing.", F)
+

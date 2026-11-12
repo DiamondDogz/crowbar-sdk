@@ -105,6 +105,27 @@ class CHelper(unittest.TestCase):
 
 
 class Check(unittest.TestCase):
+    def test_options(self):
+        good = dict(GOOD, settings="{data}/ps4rt.ini", options=[
+            {"key": "output_res", "label": {"en": "Output resolution", "fr": "Résolution"}, "values": [["1920x1080", "1080p"], ["3840x2160", "4K"]], "default": "1920x1080"},
+            {"key": "vsync", "label": "Vertical sync", "values": [["0", "Off"], ["1", {"en": "On"}]], "default": "1"}])
+        with tempfile.TemporaryDirectory() as d:
+            rt = make_runtime(Path(d), wired=True, manifest_data=good)
+            (rt / "ps4rt.ini").write_text("output_res=1920x1080\nvsync=1\nupscaler=off\n")
+            r = check.run(rt)
+            self.assertTrue(r["ok"], r["errors"])
+            self.assertIn("options.undeclared", {f["code"] for f in r["info"]})
+        bad = dict(GOOD, options=[{"key": "a b", "label": {"fr": "x"}, "values": [["1", "x"]], "default": "2"}, "x"])
+        with tempfile.TemporaryDirectory() as d:
+            r = check.run(make_runtime(Path(d), wired=True, manifest_data=bad))
+            codes = {e["code"] for e in r["errors"]}
+            for c in ("options.settings", "options.key", "options.label", "options.values", "options.item"):
+                self.assertIn(c, codes)
+        with tempfile.TemporaryDirectory() as d:
+            r = check.run(make_runtime(Path(d), wired=True, manifest_data=dict(GOOD, settings="ps4rt.ini")))
+            self.assertIn("options.missing", {w["code"] for w in r["warnings"]})
+            self.assertIn('"options"', check.handout(r) if hasattr(check, "handout") else json.dumps(r))
+
     def test_good_runtime_passes(self):
         with tempfile.TemporaryDirectory() as d:
             rt = make_runtime(Path(d), wired=True, manifest_data=GOOD)

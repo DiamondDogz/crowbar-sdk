@@ -4,38 +4,185 @@
   "title": "crowbar.json",
   "description": "How Crowbar starts a PS4RT runtime and what the runtime supports. See SPEC.md.",
   "type": "object",
-  "required": ["crowbar", "name", "game", "titleIds", "launch"],
+  "required": [
+    "crowbar",
+    "name",
+    "game",
+    "titleIds",
+    "launch"
+  ],
   "properties": {
-    "$schema": { "type": "string" },
-    "crowbar": { "description": "Format version.", "type": "integer", "minimum": 1 },
-    "name": { "description": "Runtime name shown in Crowbar.", "type": "string", "minLength": 1 },
-    "game": { "description": "Catalog id of the game.", "type": "string", "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$" },
-    "titleIds": { "type": "array", "minItems": 1, "items": { "type": "string", "pattern": "^(CUSA|PLJS|PLJM|PCJS|PCAS|PLAS)[0-9]{5}$" } },
-    "requiredVersion": { "type": "string", "pattern": "^[0-9]{2}\\.[0-9]{2}$" },
-    "launch": {
-      "type": "object", "minProperties": 1, "additionalProperties": false,
-      "properties": {
-        "windows": { "$ref": "#/$defs/command" },
-        "linux": { "$ref": "#/$defs/command" }
+    "$schema": {
+      "type": "string"
+    },
+    "crowbar": {
+      "description": "Format version.",
+      "type": "integer",
+      "minimum": 1
+    },
+    "name": {
+      "description": "Runtime name shown in Crowbar.",
+      "type": "string",
+      "minLength": 1
+    },
+    "game": {
+      "description": "Catalog id of the game.",
+      "type": "string",
+      "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$"
+    },
+    "titleIds": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "pattern": "^(CUSA|PLJS|PLJM|PCJS|PCAS|PLAS)[0-9]{5}$"
       }
     },
-    "data": { "type": "string", "minLength": 1 },
-    "settings": { "type": "string", "minLength": 1 },
-    "backup": { "type": "array", "items": { "type": "string", "minLength": 1 } },
+    "requiredVersion": {
+      "type": "string",
+      "pattern": "^[0-9]{2}\\.[0-9]{2}$"
+    },
+    "launch": {
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": false,
+      "properties": {
+        "windows": {
+          "$ref": "#/$defs/command"
+        },
+        "linux": {
+          "$ref": "#/$defs/command"
+        }
+      }
+    },
+    "data": {
+      "type": "string",
+      "minLength": 1
+    },
+    "settings": {
+      "type": "string",
+      "minLength": 1
+    },
+    "backup": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
     "features": {
       "type": "object",
       "properties": {
-        "trophies": { "type": "boolean" },
-        "trophyCard": { "type": "boolean" },
-        "dlc": { "$ref": "#/$defs/args", "contains": { "type": "string", "pattern": "\\{file\\}" } },
-        "updatePkg": { "$ref": "#/$defs/args", "contains": { "type": "string", "pattern": "\\{file\\}" } },
-        "updateFolder": { "$ref": "#/$defs/args", "contains": { "type": "string", "pattern": "\\{dir\\}" } },
-        "noDialogs": { "$ref": "#/$defs/args" }
+        "trophies": {
+          "type": "boolean"
+        },
+        "trophyCard": {
+          "type": "boolean"
+        },
+        "dlc": {
+          "$ref": "#/$defs/args",
+          "contains": {
+            "type": "string",
+            "pattern": "\\{file\\}"
+          }
+        },
+        "updatePkg": {
+          "$ref": "#/$defs/args",
+          "contains": {
+            "type": "string",
+            "pattern": "\\{file\\}"
+          }
+        },
+        "updateFolder": {
+          "$ref": "#/$defs/args",
+          "contains": {
+            "type": "string",
+            "pattern": "\\{dir\\}"
+          }
+        },
+        "noDialogs": {
+          "$ref": "#/$defs/args"
+        }
+      }
+    },
+    "options": {
+      "type": "array",
+      "description": "Settings shown by Crowbar for this runtime (keys and values of the settings .ini).",
+      "items": {
+        "type": "object",
+        "required": [
+          "key",
+          "label",
+          "values",
+          "default"
+        ],
+        "properties": {
+          "key": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_.\\-]+$"
+          },
+          "label": {
+            "$ref": "#/$defs/text"
+          },
+          "hint": {
+            "$ref": "#/$defs/text"
+          },
+          "values": {
+            "type": "array",
+            "minItems": 2,
+            "items": {
+              "type": "array",
+              "prefixItems": [
+                {
+                  "type": "string"
+                },
+                {
+                  "$ref": "#/$defs/text"
+                }
+              ],
+              "minItems": 2,
+              "maxItems": 2
+            }
+          },
+          "default": {
+            "type": "string"
+          }
+        }
       }
     }
   },
   "$defs": {
-    "command": { "type": "array", "minItems": 1, "items": { "type": "string" } },
-    "args": { "type": "array", "minItems": 1, "items": { "type": "string" } }
+    "command": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string"
+      }
+    },
+    "args": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string"
+      }
+    },
+    "text": {
+      "oneOf": [
+        {
+          "type": "string",
+          "minLength": 1
+        },
+        {
+          "type": "object",
+          "required": [
+            "en"
+          ],
+          "additionalProperties": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      ]
+    }
   }
 }

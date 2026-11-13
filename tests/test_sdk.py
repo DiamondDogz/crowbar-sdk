@@ -103,6 +103,22 @@ class CHelper(unittest.TestCase):
             self.assertEqual(out.split(), ["0", "1"])
             self.assertEqual(sorted(crowbar.read(str(p))), [0, 3, 9, 10])
 
+    def test_c_presence(self):
+        cc = shutil.which("cc") or shutil.which("gcc")
+        with tempfile.TemporaryDirectory() as d:
+            src = Path(d, "p.c")
+            src.write_text('#include "crowbar.h"\n#include <stdio.h>\n'
+                           'int main(void){printf("%d",crowbar_set_presence("Chapitre 3, Th\\xc3\\xa9\\xc3\\xa2tre imp\\xc3\\xa9rial \\xc3\\xa9\\xc3\\xa9\\xc3\\xa9\\xc3\\xa9\\xc3\\xa9\\xc3\\xa9\\xc3\\xa9\\xc3\\xa9\\xc3\\xa9\\xc3\\xa9\\xc3\\xa9\\xc3\\xa9\\xc3\\xa9\\xc3\\xa9\\xc3\\xa9\\xc3\\xa9\\xc3\\xa9\\xc3\\xa9\\xc3\\xa9\\xc3\\xa9\\xc3\\xa9\\xc3\\xa9\\xc3\\xa9\\xc3\\xa9\\xc3\\xa9",1));return 0;}\n')
+            exe = Path(d, "p")
+            subprocess.run([cc, "-std=c11", "-Wall", "-Werror", "-I", str(ROOT / "sdk/c"), str(src), str(ROOT / "sdk/c/crowbar.c"), "-o", str(exe)], check=True)
+            env = dict(os.environ, PS4RT_CONTROL_DIR=d)
+            out = subprocess.run([str(exe)], env=env, capture_output=True, text=True, check=True).stdout
+            self.assertEqual(out, "0")
+            line, online = Path(d, "presence").read_bytes().decode("utf-8").splitlines()
+            self.assertTrue(line.startswith("status=Chapitre 3, Th"))
+            self.assertLessEqual(len(line.encode()) - len("status="), 80)
+            self.assertEqual(online, "online=1")
+
 
 class Check(unittest.TestCase):
     def test_options(self):
@@ -282,3 +298,24 @@ def test_manifest_14_keys(tmp_path):
     manifest.validate(bad, tmp_path, r)
     codes = {f.code for f in r.errors}
     assert {"trophyFormat.invalid", "language.env", "trophyFile.outside"} <= codes, codes
+
+
+def test_sdk_15(tmp_path, monkeypatch):
+    from crowbar_sdk import manifest
+    import crowbar_sdk._crowbar as cb
+    m = {"crowbar": 1, "name": "T", "game": "t", "launch": {"linux": ["run"]}, "minCrowbar": "0.3.0",
+         "mods": {"dir": "{data}/mods", "help": "Drop .pak files here."}}
+    r = manifest.Report()
+    manifest.validate(m, tmp_path, r)
+    assert not [f for f in r.errors if f.code.startswith(("minCrowbar", "mods"))], [f.as_dict() for f in r.errors]
+    assert not [f for f in r.warnings if f.code == "key.unknown"]
+    r = manifest.Report()
+    manifest.validate(dict(m, minCrowbar="soon", mods={"dir": "../x"}), tmp_path, r)
+    assert {"minCrowbar.invalid", "mods.outside"} <= {f.code for f in r.errors}
+    monkeypatch.setenv("PS4RT_CONTROL_DIR", str(tmp_path))
+    monkeypatch.setenv("PS4RT_CAPTURE_DIR", str(tmp_path / "shots"))
+    assert cb.set_presence("Chapter 3,\n Imperial Theater " + "x" * 100, online=True)
+    text = (tmp_path / "presence").read_text(encoding="utf-8")
+    assert text.startswith("status=Chapter 3, Imperial Theater x") and "online=1" in text and len(text.splitlines()[0]) == len("status=") + 80
+    assert cb.capture_dir() == str(tmp_path / "shots")
+

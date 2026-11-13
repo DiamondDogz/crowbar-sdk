@@ -212,3 +212,30 @@ void crowbar_answer(int ok) {
     fprintf(out, "%ld %s\n", crowbar_last_seq, word);
     if (fclose(out) != 0 || crowbar_replace(tmp, path) != 0) remove(tmp);
 }
+
+int crowbar_set_presence(const char *status, int online) {
+    const char *dir = getenv("PS4RT_CONTROL_DIR");
+    if (!dir || !*dir) return -1;
+    char path[4096], tmp[4200], text[96];
+    snprintf(path, sizeof(path), "%s/presence", dir);
+    snprintf(tmp, sizeof(tmp), "%s.tmp", path);
+    /* At most 80 bytes of the status, never cut inside a UTF-8 character, no line breaks. */
+    const char *src = status ? status : "";
+    size_t n = strlen(src);
+    if (n > 80) {
+        n = 80;
+        while (n > 0 && ((unsigned char)src[n] & 0xC0) == 0x80) n--;
+    }
+    for (size_t i = 0; i < n; i++) text[i] = (src[i] == '\n' || src[i] == '\r') ? ' ' : src[i];
+    text[n] = 0;
+    FILE *out = fopen(tmp, "wb");
+    if (!out) return -1;
+    fprintf(out, "status=%s\nonline=%d\n", text, online ? 1 : 0);
+    if (fclose(out) != 0 || crowbar_replace(tmp, path) != 0) { remove(tmp); return -1; }
+    return 0;
+}
+
+const char *crowbar_capture_dir(void) {
+    const char *dir = getenv("PS4RT_CAPTURE_DIR");
+    return dir && *dir ? dir : NULL;
+}

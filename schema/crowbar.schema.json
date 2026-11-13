@@ -187,6 +187,29 @@
         }
       },
       "description": "The variable that sets the game language, and its value for each PS4 language number. PS4RT_LANGUAGE is passed as well."
+    },
+    "minCrowbar": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$",
+      "description": "SDK 1.5: oldest Crowbar version this runtime needs, as \"0.3.0\". An older Crowbar asks the player to update."
+    },
+    "mods": {
+      "type": "object",
+      "required": [
+        "dir"
+      ],
+      "description": "SDK 1.5: the runtime reads mods from this folder; Crowbar shows it in the game's Add-ons.",
+      "properties": {
+        "dir": {
+          "type": "string",
+          "description": "Relative to the runtime; {data} and {titleId} allowed."
+        },
+        "help": {
+          "type": "string",
+          "description": "Short text telling players how to install a mod."
+        }
+      },
+      "additionalProperties": false
     }
   },
   "$defs": {

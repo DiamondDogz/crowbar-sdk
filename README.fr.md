@@ -11,6 +11,8 @@
 - **Trophées** : liste, icônes et descriptions dans leur langue, trophées cachés, lus dans leur propre dump. Vous ne fournissez que le déblocage.
 - **Une carte et une notification** quand un trophée tombe, en direct pendant la partie. Leurs amis en ligne sont prévenus aussi, et peuvent comparer leurs trophées.
 - **Une vraie pause avec le bouton Guide** (facultatif) : le jeu s'arrête pendant que le menu de Crowbar est ouvert, et le Guide refuse poliment quand le jeu ne peut pas s'arrêter (une cinématique, par exemple), comme sur console. Deux appels avec le SDK : `crowbar_poll()` et `crowbar_answer()`.
+- **Ce qu'ils font, montré à leurs amis et sur Discord** (facultatif) : « Sakura Wars · Chapitre 3 ». Une partie en ligne n'est jamais mise en pause. Un appel : `crowbar_set_presence()`.
+- **Leurs captures et vidéos dans Crowbar** (facultatif) : enregistrez-les dans `PS4RT_CAPTURE_DIR` et le jeu reçoit une galerie Captures. Les **mods** ont leur dossier dans les Contenus du jeu quand vous déclarez `mods`.
 - **Un profil** : niveau, totaux, progression par jeu.
 - **Téléchargement et mises à jour** depuis le catalogue, chaque fichier vérifié par son SHA-256.
 - **DLC et mises à jour du jeu** lus dans leurs `.pkg` ; vous ne recevez que ceux à installer.

@@ -16,7 +16,7 @@ import os
 import re
 import threading
 
-SDK_VERSION = "1.2.0"
+SDK_VERSION = "1.5.0"
 MAX_TROPHIES = 128
 
 _lock = threading.Lock()
@@ -124,3 +124,27 @@ def answer(ok: bool = True) -> None:
     with open(path + ".tmp", "w", encoding="utf-8") as f:
         f.write(f"{_last['seq']} {word}\n")
     os.replace(path + ".tmp", path)
+
+
+def set_presence(status: str | None = None, online: bool = False) -> bool:
+    """SDK 1.5: what the player is doing ("Chapter 3, Imperial Theater", at most 80 characters),
+    shown to their friends and on Discord, and whether an online session is running (Crowbar then
+    does not pause the game). Call it when either changes. False when not started by Crowbar."""
+    d = os.environ.get("PS4RT_CONTROL_DIR")
+    if not d:
+        return False
+    text = " ".join((status or "").split())[:80]
+    path = os.path.join(d, "presence")
+    try:
+        with open(path + ".tmp", "w", encoding="utf-8") as f:
+            f.write(f"status={text}\nonline={1 if online else 0}\n")
+        os.replace(path + ".tmp", path)
+    except OSError:
+        return False
+    return True
+
+
+def capture_dir() -> str | None:
+    """SDK 1.5: the folder where Crowbar wants this game's screenshots and clips ($PS4RT_CAPTURE_DIR),
+    or None. Write each file whole (a temporary name, then renamed): .png, .jpg, .webp, .mp4, .webm."""
+    return os.environ.get("PS4RT_CAPTURE_DIR") or None

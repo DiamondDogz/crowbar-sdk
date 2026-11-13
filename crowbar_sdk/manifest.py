@@ -20,7 +20,7 @@ FEATURE_ARGS = {
     "updateFolder": "{dir}",
     "noDialogs": None,
 }
-KNOWN_KEYS = {"$schema", "crowbar", "name", "game", "titleIds", "requiredVersion", "launch", "data", "settings", "backup", "features", "options", "trophyFile", "trophyFormat", "language"}
+KNOWN_KEYS = {"$schema", "crowbar", "name", "game", "titleIds", "requiredVersion", "launch", "data", "settings", "backup", "features", "options", "trophyFile", "trophyFormat", "language", "minCrowbar", "mods"}
 TROPHY_FORMATS = ("sdk", "ps4rt-unlocks", "trg-progress")
 BUTTON_STYLES = ("playstation", "xbox")
 
@@ -180,6 +180,18 @@ def validate(m: dict, root: Path, report: Report) -> None:
             report.add("error", "language.env", '"language.env" must be the name of the variable the runtime reads (upper case).', 'For example {"env": "DCP_LANGUAGE", "values": {"1": "english"}}.', F)
         elif not isinstance(lang.get("values", {}), dict) or not all(str(k).isdigit() and isinstance(v, str) for k, v in lang.get("values", {}).items()):
             report.add("error", "language.values", '"language.values" maps a PS4 language number ("1", "2"...) to the value the runtime expects.', "", F)
+    mc = m.get("minCrowbar")
+    if mc is not None and (not isinstance(mc, str) or not re.match(r"^\d+\.\d+\.\d+$", mc)):
+        report.add("error", "minCrowbar.invalid", '"minCrowbar" is the oldest Crowbar version the runtime needs, as "0.3.0".', "", F)
+    mods = m.get("mods")
+    if mods is not None:
+        mdir = mods.get("dir") if isinstance(mods, dict) else None
+        if not isinstance(mdir, str) or not mdir.strip():
+            report.add("error", "mods.dir", '"mods.dir" is the folder the runtime reads mods from, relative to the runtime ({data} allowed).', 'For example {"dir": "{data}/mods"}.', F)
+        elif Path(mdir).is_absolute() or ".." in Path(mdir.replace("{data}", "data").replace("{titleId}", "t")).parts:
+            report.add("error", "mods.outside", '"mods.dir" must stay inside the runtime folder.', "", F)
+        elif not isinstance(mods.get("help", ""), str):
+            report.add("error", "mods.help", '"mods.help" is a short text telling players how to install a mod.', "", F)
 
     feats = m.get("features", {})
     if not isinstance(feats, dict):
@@ -231,7 +243,8 @@ def command(m: dict, platform: str, root: Path, game: Path, title_id: str,
 
 def environment(m: dict, root: Path, game: Path, title_id: str, crowbar_version: str,
                 card_dir: Path | None = None, language: int | None = None, lang_code: str | None = None,
-                button_style: str = "playstation") -> dict[str, str]:
+                button_style: str = "playstation", control_dir: Path | None = None,
+                capture_dir: Path | None = None) -> dict[str, str]:
     """The variables Crowbar adds to the environment (SPEC.md, Launch)."""
     data = root / data_dir(m, title_id)
     env = {
@@ -254,6 +267,10 @@ def environment(m: dict, root: Path, game: Path, title_id: str, crowbar_version:
                 env[lang["env"]] = value
     if lang_code:
         env["PS4RT_TROPHY_LANG"] = lang_code
+    if control_dir is not None:
+        env["PS4RT_CONTROL_DIR"] = str(control_dir)
+    if capture_dir is not None:
+        env["PS4RT_CAPTURE_DIR"] = str(capture_dir)
     return env
 
 

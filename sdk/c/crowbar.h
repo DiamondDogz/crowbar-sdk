@@ -15,7 +15,7 @@
 extern "C" {
 #endif
 
-#define CROWBAR_SDK_VERSION "1.4.0"
+#define CROWBAR_SDK_VERSION "1.5.0"
 #define CROWBAR_MAX_TROPHIES 128 /* a PS4 trophy set holds ids 0..127 */
 
 /*
@@ -52,6 +52,19 @@ const char *crowbar_version(void);
 int crowbar_poll(void);
 void crowbar_answer(int ok);
 int crowbar_request_trophy(void);
+
+/*
+ * SDK 1.5: what the player is doing, shown to their friends and on Discord ("Chapter 3, Imperial
+ * Theater", at most 80 characters, UTF-8; NULL or "" for nothing), and whether an online session is
+ * running (online = 1: Crowbar does not pause the game, other players keep playing). Call it when
+ * either changes, not every frame. Returns 0, or -1 when not started by Crowbar or on error.
+ */
+int crowbar_set_presence(const char *status, int online);
+
+/* SDK 1.5: the folder where Crowbar wants this game's screenshots and clips ($PS4RT_CAPTURE_DIR),
+ * shown in Crowbar's Captures; NULL when not started by Crowbar. Write each file whole
+ * (a temporary name, then renamed) as .png, .jpg, .webp, .mp4 or .webm. */
+const char *crowbar_capture_dir(void);
 
 #ifdef __cplusplus
 }

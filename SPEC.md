@@ -60,6 +60,8 @@ At the root of the runtime, the folder players unpack from your release.
 | `trophyFile` | no | Where the runtime writes its unlocks, when not `{data}/user/trophies.json` (§2). SDK 1.4 |
 | `trophyFormat` | no | `sdk` (default), `ps4rt-unlocks` or `trg-progress` (§2). SDK 1.4 |
 | `language` | no | The variable that sets the game language, and its value for each PS4 language number (§3). SDK 1.4 |
+| `minCrowbar` | no | The oldest Crowbar version the runtime needs (`"0.3.0"`). An older Crowbar does not launch it and asks the player to update. SDK 1.5 |
+| `mods` | no | `{"dir": "{data}/mods", "help": "…"}`: the folder the runtime reads mods from, and an optional short text on installing one. Crowbar shows it in the game's Add-ons, opens it for the player and never changes what is inside. SDK 1.5 |
 
 **Paths** are relative to the folder that holds `crowbar.json`, use `/`, and never leave it (`..` and absolute paths are refused). A program with a `/` is a file in the runtime; a bare name (`python3`) is looked up in the PATH. Crowbar always starts the command **from the runtime root** (working directory).
 
@@ -177,6 +179,7 @@ Crowbar adds these variables. Read the ones you need, ignore the rest.
 | `PS4RT_CONTROL_DIR` | The folder of pause, unlock and quit requests (§4) | every runtime |
 | `PS4RT_BUTTON_STYLE` | `playstation` or `xbox`: the button prompts the player wants in games (SDK 1.4) | every runtime |
 | *`language.env`* | The value from `language.values` for the chosen language (SDK 1.4), beside `PS4RT_LANGUAGE` | `crowbar.json` runtimes that declare `language` |
+| `PS4RT_CAPTURE_DIR` | Where to save screenshots and clips (§4); Crowbar shows them in the game's Captures (SDK 1.5) | every runtime |
 | `PS4RT_ACHIEVEMENTS_DIR` | A separate folder for the runtime's own trophy state, test profile only (§4) | every runtime, test profile only |
 
 ## 4. Features: DLC, updates, dialogs
@@ -222,6 +225,26 @@ To check the whole trophy chain without playing, a developer turns on Crowbar's 
 - In the test profile, Crowbar points `PS4RT_TROPHY_FILE` to a separate file, and `PS4RT_ACHIEVEMENTS_DIR` to a separate folder: a runtime that keeps more trophy state of its own (what the game reads back) keeps it there, so the player's real trophies are never touched. Resetting the test profile deletes both.
 
 The SDK: `crowbar_poll()` returns `CROWBAR_UNLOCK`, `crowbar_request_trophy()` gives the number, `crowbar_answer(1 or 0)` replies (C); `crowbar.poll()` returns `"unlock"` and `crowbar.request_trophy()` the number (Python).
+
+### Presence and online play (optional, SDK 1.5)
+
+The runtime can tell Crowbar what the player is doing, in a third file of `PS4RT_CONTROL_DIR`, written whole (a temporary file, then renamed) whenever it changes:
+
+```
+status=Chapter 3, Imperial Theater
+online=0
+```
+
+- `status`: at most 80 characters, UTF-8, one line. Crowbar shows it to the player's friends ("Sakura Wars · Chapter 3, Imperial Theater") and as the second line of the Discord activity. Empty for nothing. Write it when the scene changes, not every frame; Crowbar reads it every few seconds.
+- `online=1` while an online session runs (Dragon's Crown Pro's online play, for example): Crowbar then **never pauses the game**, neither by asking it (no `pause` request) nor by suspending the process; the Guide opens with the game running. Write `online=0` when the session ends.
+
+The SDK: `crowbar_set_presence(status, online)` (C), `crowbar.set_presence(status, online)` (Python).
+
+### Captures (optional, SDK 1.5)
+
+`PS4RT_CAPTURE_DIR` is a folder per game that Crowbar keeps. A runtime that takes screenshots or clips (a capture key, a photo mode) saves them there, each file written whole under a temporary name and then renamed, as `.png`, `.jpg`, `.webp`, `.mp4` or `.webm`. A **Captures** button then appears on the game in Crowbar, with the captures newest first. Without the variable (started outside Crowbar), keep your usual folder.
+
+The SDK: `crowbar_capture_dir()` (C), `crowbar.capture_dir()` (Python); both return nothing outside Crowbar.
 
 When the game ends, its exit code and output go to Crowbar's launch log. A non-zero code within 30 seconds opens that log with a **Copy report** button.
 

@@ -81,7 +81,7 @@ _last = {"seq": 0, "kind": None}
 
 def poll() -> str | None:
     """A new request from Crowbar: "pause", "resume", "unlock" (test profile: see request_trophy()),
-    or None. Call about ten times a second."""
+    "quit" (save, answer(), exit with code 0 within 2 s), or None. Call about ten times a second."""
     d = os.environ.get("PS4RT_CONTROL_DIR")
     if not d:
         return None
@@ -101,7 +101,7 @@ def poll() -> str | None:
         trophy = int(parts[2]) if word == "unlock" and len(parts) > 2 else -1
     except (OSError, ValueError, IndexError):
         return None
-    if seq <= _last["seq"] or word not in ("pause", "resume", "unlock"):
+    if seq <= _last["seq"] or word not in ("pause", "resume", "unlock", "quit"):
         return None
     if word == "unlock" and not 0 <= trophy < 128:
         return None
@@ -119,7 +119,7 @@ def answer(ok: bool = True) -> None:
     d = os.environ.get("PS4RT_CONTROL_DIR")
     if not d or not _last["kind"]:
         return
-    word = {"pause": "paused" if ok else "refused", "unlock": "unlocked" if ok else "refused"}.get(_last["kind"], "running")
+    word = {"pause": "paused" if ok else "refused", "unlock": "unlocked" if ok else "refused", "quit": "quitting"}.get(_last["kind"], "running")
     path = os.path.join(d, "state")
     with open(path + ".tmp", "w", encoding="utf-8") as f:
         f.write(f"{_last['seq']} {word}\n")

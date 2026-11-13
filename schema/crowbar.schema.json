@@ -153,6 +153,40 @@
           }
         }
       }
+    },
+    "trophyFile": {
+      "type": "string",
+      "description": "Where the runtime writes its trophy unlocks, relative to the root; {data} and {titleId} allowed, * in the file name and its folder (SPEC section 2). Default {data}/user/trophies.json."
+    },
+    "trophyFormat": {
+      "enum": [
+        "sdk",
+        "ps4rt-unlocks",
+        "trg-progress"
+      ],
+      "description": "Format of trophyFile: sdk (JSON of section 2, default), ps4rt-unlocks (PS4RT-UNLOCKS 1, then <id> <unix seconds>), trg-progress (unlocked <id> <unix seconds>)."
+    },
+    "language": {
+      "type": "object",
+      "required": [
+        "env"
+      ],
+      "properties": {
+        "env": {
+          "type": "string",
+          "pattern": "^[A-Z][A-Z0-9_]*$"
+        },
+        "values": {
+          "type": "object",
+          "patternProperties": {
+            "^[0-9]+$": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "description": "The variable that sets the game language, and its value for each PS4 language number. PS4RT_LANGUAGE is passed as well."
     }
   },
   "$defs": {

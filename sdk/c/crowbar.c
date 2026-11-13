@@ -190,6 +190,7 @@ int crowbar_poll(void) {
     if (got < 2 || seq <= crowbar_last_seq) return CROWBAR_NONE;
     crowbar_last_seq = seq;
     crowbar_last_kind = !strcmp(word, "pause") ? CROWBAR_PAUSE : !strcmp(word, "resume") ? CROWBAR_RESUME
+                      : !strcmp(word, "quit") ? CROWBAR_QUIT
                       : (!strcmp(word, "unlock") && got == 3 && arg >= 0 && arg < CROWBAR_MAX_TROPHIES) ? CROWBAR_UNLOCK : CROWBAR_NONE;
     crowbar_last_trophy = crowbar_last_kind == CROWBAR_UNLOCK ? arg : -1;
     return crowbar_last_kind;
@@ -206,7 +207,8 @@ void crowbar_answer(int ok) {
     FILE *out = fopen(tmp, "wb");
     if (!out) return;
     const char *word = crowbar_last_kind == CROWBAR_PAUSE ? (ok ? "paused" : "refused")
-                     : crowbar_last_kind == CROWBAR_UNLOCK ? (ok ? "unlocked" : "refused") : "running";
+                     : crowbar_last_kind == CROWBAR_UNLOCK ? (ok ? "unlocked" : "refused")
+                     : crowbar_last_kind == CROWBAR_QUIT ? "quitting" : "running";
     fprintf(out, "%ld %s\n", crowbar_last_seq, word);
     if (fclose(out) != 0 || crowbar_replace(tmp, path) != 0) remove(tmp);
 }

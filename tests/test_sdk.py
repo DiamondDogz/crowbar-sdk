@@ -261,3 +261,24 @@ def test_pause_exchange(tmp_path, monkeypatch):
     assert (tmp_path / "state").read_text().split() == ["4", "unlocked"]
     (tmp_path / "request").write_text("5 unlock 200\n")
     assert cb.poll() is None, "a trophy number outside 0..127 is ignored"
+    (tmp_path / "request").write_text("6 quit\n")
+    assert cb.poll() == "quit"
+    cb.answer()
+    assert (tmp_path / "state").read_text().split() == ["6", "quitting"]
+
+
+def test_manifest_14_keys(tmp_path):
+    from crowbar_sdk import manifest
+    m = {"crowbar": 1, "name": "T", "game": "t", "titleIds": ["CUSA00001"], "launch": {"linux": ["run"]},
+         "trophyFile": "{data}/user/achievements/*/NPWR*.dat", "trophyFormat": "ps4rt-unlocks",
+         "language": {"env": "DCP_LANGUAGE", "values": {"1": "english", "2": "french"}}}
+    r = manifest.Report()
+    manifest.validate(m, tmp_path, r)
+    assert not [f for f in r.errors if f.code.startswith(("trophy", "language"))], [f.as_dict() for f in r.errors]
+    env = manifest.environment(m, tmp_path, tmp_path, "CUSA00001", "0.2.9", language=2, button_style="xbox")
+    assert env["DCP_LANGUAGE"] == "french" and env["PS4RT_LANGUAGE"] == "2" and env["PS4RT_BUTTON_STYLE"] == "xbox"
+    bad = dict(m, trophyFormat="other", language={"env": "lower"}, trophyFile="../x")
+    r = manifest.Report()
+    manifest.validate(bad, tmp_path, r)
+    codes = {f.code for f in r.errors}
+    assert {"trophyFormat.invalid", "language.env", "trophyFile.outside"} <= codes, codes

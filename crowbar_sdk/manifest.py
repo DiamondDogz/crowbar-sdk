@@ -20,7 +20,9 @@ FEATURE_ARGS = {
     "updateFolder": "{dir}",
     "noDialogs": None,
 }
-KNOWN_KEYS = {"$schema", "crowbar", "name", "game", "titleIds", "requiredVersion", "launch", "data", "settings", "backup", "features", "options"}
+KNOWN_KEYS = {"$schema", "crowbar", "name", "game", "titleIds", "requiredVersion", "launch", "data", "settings", "backup", "features", "options", "trophyFile", "trophyFormat", "language"}
+TROPHY_FORMATS = ("sdk", "ps4rt-unlocks", "trg-progress")
+BUTTON_STYLES = ("playstation", "xbox")
 
 
 @dataclass
@@ -158,6 +160,26 @@ def validate(m: dict, root: Path, report: Report) -> None:
         report.add("error", "backup.invalid", '"backup" must be a list of paths.', "", F)
 
     check_options(m, report)
+    tf, fmt = m.get("trophyFile"), m.get("trophyFormat")
+    if tf is not None:
+        if not isinstance(tf, str) or not tf:
+            report.add("error", "trophyFile.invalid", '"trophyFile" must be a path string.', "", F)
+        elif os.path.isabs(tf) or ".." in Path(tf).parts:
+            report.add("error", "trophyFile.outside", '"trophyFile" must stay inside the runtime folder.', 'Use a relative path, for example "{data}/user/trophies.json".', F)
+        elif _placeholders(tf) - {"data", "titleId"}:
+            report.add("error", "trophyFile.placeholder", '"trophyFile" may only use {data} and {titleId}.', "", F)
+        elif "*" in str(Path(tf).parent.parent):
+            report.add("error", "trophyFile.glob", '"trophyFile": a * is allowed in the file name and its folder only.', 'For example "{data}/user/achievements/*/NPWR*.dat".', F)
+    if fmt is not None and fmt not in TROPHY_FORMATS:
+        report.add("error", "trophyFormat.invalid", f'"trophyFormat" must be one of {", ".join(TROPHY_FORMATS)}.', "", F)
+    if fmt not in (None, "sdk") and tf is None:
+        report.add("error", "trophyFormat.file", '"trophyFormat" other than "sdk" needs "trophyFile".', "Say where the runtime writes that file.", F)
+    lang = m.get("language")
+    if lang is not None:
+        if not isinstance(lang, dict) or not isinstance(lang.get("env"), str) or not re.match(r"^[A-Z][A-Z0-9_]*$", lang.get("env", "")):
+            report.add("error", "language.env", '"language.env" must be the name of the variable the runtime reads (upper case).', 'For example {"env": "DCP_LANGUAGE", "values": {"1": "english"}}.', F)
+        elif not isinstance(lang.get("values", {}), dict) or not all(str(k).isdigit() and isinstance(v, str) for k, v in lang.get("values", {}).items()):
+            report.add("error", "language.values", '"language.values" maps a PS4 language number ("1", "2"...) to the value the runtime expects.', "", F)
 
     feats = m.get("features", {})
     if not isinstance(feats, dict):
@@ -208,7 +230,8 @@ def command(m: dict, platform: str, root: Path, game: Path, title_id: str,
 
 
 def environment(m: dict, root: Path, game: Path, title_id: str, crowbar_version: str,
-                card_dir: Path | None = None, language: int | None = None, lang_code: str | None = None) -> dict[str, str]:
+                card_dir: Path | None = None, language: int | None = None, lang_code: str | None = None,
+                button_style: str = "playstation") -> dict[str, str]:
     """The variables Crowbar adds to the environment (SPEC.md, Launch)."""
     data = root / data_dir(m, title_id)
     env = {
@@ -216,6 +239,7 @@ def environment(m: dict, root: Path, game: Path, title_id: str, crowbar_version:
         "PS4RT_GAME_DIR": str(game),
         "PS4RT_DATA_DIR": str(data),
         "PS4RT_TROPHY_FILE": str(data / "user" / "trophies.json"),
+        "PS4RT_BUTTON_STYLE": button_style if button_style in BUTTON_STYLES else "playstation",
     }
     if m.get("settings"):
         env["PS4RT_CONFIG"] = str(root / m["settings"].replace("{data}", data_dir(m, title_id)).replace("{titleId}", title_id))
@@ -223,6 +247,11 @@ def environment(m: dict, root: Path, game: Path, title_id: str, crowbar_version:
         env["PS4RT_TROPHY_CARD_DIR"] = str(card_dir)
     if language is not None:
         env["PS4RT_LANGUAGE"] = str(language)
+        lang = m.get("language")
+        if isinstance(lang, dict) and lang.get("env"):
+            value = (lang.get("values") or {}).get(str(language))
+            if value is not None:
+                env[lang["env"]] = value
     if lang_code:
         env["PS4RT_TROPHY_LANG"] = lang_code
     return env

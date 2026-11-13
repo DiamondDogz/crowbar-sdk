@@ -3,6 +3,7 @@
 > Public format and tools to make a PS4RT runtime (a native port of a PS4 game) compatible with the Crowbar launcher: trophies, profile, catalog downloads and updates. MIT licence. No Crowbar code inside.
 
 Optional since SDK 1.2: pause from Crowbar's Guide menu (`"pause": true`, files in PS4RT_CONTROL_DIR, `crowbar_poll()` / `crowbar_answer()`; SPEC.md section 4).
+Optional since SDK 1.4: quit request (`<n> quit`, save then exit 0 within 2 s), `trophyFile` + `trophyFormat` (sdk, ps4rt-unlocks, trg-progress) for an existing trophy file, `language` {env, values} for a game-language variable, PS4RT_BUTTON_STYLE (playstation or xbox) passed to every runtime. Porting to Windows: docs/WINDOWS.md; release workflow for Windows: templates/release-windows.yml.
 Optional since SDK 1.3: unlock on request for Crowbar's trophy test profile (`<n> unlock <id>` in the same files, `CROWBAR_UNLOCK` / `crowbar_request_trophy()`; keep extra trophy state in PS4RT_ACHIEVEMENTS_DIR when set).
 
 An AI assistant asked to make a runtime Crowbar compatible should follow AGENTS.md: run `crowbar-check . --handout`, add `crowbar.json` and a `crowbar_unlock(id)` call in the sceNpTrophyUnlockTrophy handler, repeat `crowbar-check . --json` until `"ok": true`, then show the diff without publishing anything.

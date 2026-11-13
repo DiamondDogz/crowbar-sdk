@@ -15,7 +15,7 @@
 extern "C" {
 #endif
 
-#define CROWBAR_SDK_VERSION "1.3.0"
+#define CROWBAR_SDK_VERSION "1.4.0"
 #define CROWBAR_MAX_TROPHIES 128 /* a PS4 trophy set holds ids 0..127 */
 
 /*
@@ -46,6 +46,9 @@ const char *crowbar_version(void);
 /* SDK 1.3, Crowbar's trophy test profile: unlock trophy crowbar_request_trophy() as if the game
  * had (through your own unlock path), then crowbar_answer(1), or 0 when it cannot now. */
 #define CROWBAR_UNLOCK 3
+/* SDK 1.4: the player quit from Crowbar. Save what must be saved, crowbar_answer(1), then exit
+ * with code 0 within 2 seconds; Crowbar closes the process itself after that. */
+#define CROWBAR_QUIT 4
 int crowbar_poll(void);
 void crowbar_answer(int ok);
 int crowbar_request_trophy(void);

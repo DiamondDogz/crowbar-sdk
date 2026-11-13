@@ -1,0 +1,65 @@
+name: Release
+
+# Template (crowbar-sdk): publishes the player archive as a GitHub release.
+# - Run it by hand (Actions > Release > Run workflow) with a version, or push a tag windows-<version>.
+# - A version with a suffix (1.2-rc.1, 1.0.1-pause.3) is a pre-release; 1.2 or 1.0.1 a release.
+# - The title is "<LAUNCHER> windows-<version>", like the first releases of the repository.
+# - Never push a change to this file while a build runs: GitHub then refuses to tag that build
+#   (the workflow file it ran is no longer the branch's), and the release fails with HTTP 403.
+# Adapt BUILD (how your archive is made) and LAUNCHER; keep the rest.
+on:
+  push:
+    tags: ["windows-*"]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version, without the windows- prefix (1.2, 1.2-rc.1)"
+        required: true
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: windows-latest
+    timeout-minutes: 60
+    env:
+      LAUNCHER: MyLauncher
+      VERSION: ${{ inputs.version || github.ref_name }}
+      # GitHub's image has its own C:/msys64: never let a script put it first on PATH (exit code 127).
+      MSYS2_ROOT: /nonexistent
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build the archive
+        shell: bash
+        run: |
+          VERSION=${VERSION#windows-}
+          echo "VERSION=$VERSION" >> "$GITHUB_ENV"
+          mkdir -p dist
+          # BUILD: make dist/<name>-windows-$VERSION.zip here.
+          ( cd dist && for z in *.zip; do sha256sum "$z" > "$z.sha256"; done )
+      - name: Check it with crowbar-check
+        shell: bash
+        run: |
+          pip install --quiet git+https://github.com/DiamondDogz/crowbar-sdk
+          mkdir check && cd check && unzip -q ../dist/*.zip
+          crowbar-check */
+      - name: Publish
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          TAG="windows-$VERSION"
+          pre=()
+          [[ $VERSION == *-* ]] && pre=(--prerelease)
+          sha=$(cut -d' ' -f1 dist/*.sha256)
+          printf 'SHA-256: %s\n' "$sha" > notes.md
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release upload "$TAG" dist/* --clobber
+          else
+            gh release create "$TAG" dist/* --target "$GITHUB_SHA" "${pre[@]}" --title "$LAUNCHER $TAG" --notes-file notes.md
+          fi

@@ -56,7 +56,8 @@ The same code hides it again.
 | `crowbar-check` | Checks a runtime folder or release archive; `--json` for agents and CI, `--handout` for a step-by-step plan |
 | `crowbar-fake` | Runs your runtime exactly as Crowbar would and prints each trophy it records, without installing Crowbar |
 | [`schema/crowbar.schema.json`](schema/crowbar.schema.json) | JSON Schema for editors |
-| [`templates/`](templates) | Example `crowbar.json` files and a release workflow that publishes your archive with its `.sha256` |
+| [`templates/`](templates) | Example `crowbar.json` files and release workflows (Linux, and Windows: stable or pre-release by suffix) that publish your archive with its `.sha256` |
+| [`docs/WINDOWS.md`](docs/WINDOWS.md) | Porting a runtime to Windows: the traps that compile fine and fail in the game |
 
 ```sh
 pip install git+https://github.com/DiamondDogz/crowbar-sdk

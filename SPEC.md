@@ -57,6 +57,9 @@ At the root of the runtime, the folder players unpack from your release.
 | `backup` | no | What Crowbar's backups take. Default: `data` up to its first placeholder (`out/{titleId}` → `out`) |
 | `features` | no | What the runtime can do, with the arguments to add (§4) |
 | `options` | no | The settings Crowbar's settings screen shows for this runtime: keys and values of the `settings` file (below) |
+| `trophyFile` | no | Where the runtime writes its unlocks, when not `{data}/user/trophies.json` (§2). SDK 1.4 |
+| `trophyFormat` | no | `sdk` (default), `ps4rt-unlocks` or `trg-progress` (§2). SDK 1.4 |
+| `language` | no | The variable that sets the game language, and its value for each PS4 language number (§3). SDK 1.4 |
 
 **Paths** are relative to the folder that holds `crowbar.json`, use `/`, and never leave it (`..` and absolute paths are refused). A program with a `/` is a file in the runtime; a bare name (`python3`) is looked up in the PATH. Crowbar always starts the command **from the runtime root** (working directory).
 
@@ -119,6 +122,21 @@ The only thing a runtime must write. Each time the game calls `sceNpTrophyUnlock
 
 The SDK does all of this: `crowbar_unlock(id)` in C (`sdk/c/`), `crowbar.unlock(id)` in Python (`sdk/python/`).
 
+**A runtime that already keeps its unlocks in another format** does not need a second file (SDK 1.4): it says where and how in `crowbar.json`, and Crowbar reads it as it is.
+
+```json
+"trophyFile": "{data}/user/achievements/*/NPWR*.dat",
+"trophyFormat": "ps4rt-unlocks"
+```
+
+| `trophyFormat` | Content |
+| --- | --- |
+| `sdk` | The JSON above (default) |
+| `ps4rt-unlocks` | A first line `PS4RT-UNLOCKS<tab>1`, then one line `<id><tab><unix seconds>` per trophy (the ports of HekamiAeon) |
+| `trg-progress` | Lines `unlocked <id> <unix seconds>`; other lines are ignored (the TRG ports) |
+
+A `*` may stand in the file name and in its folder (`achievements/*/NPWR*.dat`): Crowbar takes the first match, user `1` first, and looks again at each reading, since the file often appears with the first trophy.
+
 Crowbar reads the file **every 2 seconds during the game** (live notification), and again when the game ends. It copies new unlocks into its own database, so they survive a reinstall or a new runtime version. It also notes whether mods or patches were active (`mods.json`, `patches.json`), for a future "no mods" mode; the runtime does nothing for that.
 
 With Friends turned on, Crowbar tells the player's online friends about each new unlock (trophy name and grade, read from the player's own dump), and friends can compare trophies (numbers and dates only). The runtime does nothing for that, and nothing else is sent.
@@ -156,7 +174,9 @@ Crowbar adds these variables. Read the ones you need, ignore the rest.
 | `PS4RT_TROPHY_CARD_DIR` | Card texts and icons (§2) | when `trophyCard` is true |
 | `PS4RT_LANGUAGE` | Game language, PS4 number (1 English, 2 French, 3 Spanish, 4 German…) | when the player picked one |
 | `PS4RT_TROPHY_LANG` | Same, as a short code (`en`, `fr`…) | when the player picked one |
-| `PS4RT_CONTROL_DIR` | The folder of pause and unlock requests (§4) | every runtime |
+| `PS4RT_CONTROL_DIR` | The folder of pause, unlock and quit requests (§4) | every runtime |
+| `PS4RT_BUTTON_STYLE` | `playstation` or `xbox`: the button prompts the player wants in games (SDK 1.4) | every runtime |
+| *`language.env`* | The value from `language.values` for the chosen language (SDK 1.4), beside `PS4RT_LANGUAGE` | `crowbar.json` runtimes that declare `language` |
 | `PS4RT_ACHIEVEMENTS_DIR` | A separate folder for the runtime's own trophy state, test profile only (§4) | every runtime, test profile only |
 
 ## 4. Features: DLC, updates, dialogs
@@ -175,8 +195,8 @@ The exchange goes through two small text files in `PS4RT_CONTROL_DIR`, each writ
 
 | File | Written by | Content |
 | --- | --- | --- |
-| `request` | Crowbar | `<n> pause`, `<n> resume` or `<n> unlock <id>` (below), `n` growing with each request |
-| `state` | the runtime | `0 ready` as soon as it starts, then `<n> paused`, `<n> refused`, `<n> running` or `<n> unlocked`, `n` copied from the request it answers |
+| `request` | Crowbar | `<n> pause`, `<n> resume`, `<n> quit` or `<n> unlock <id>` (below), `n` growing with each request |
+| `state` | the runtime | `0 ready` as soon as it starts, then `<n> paused`, `<n> refused`, `<n> running`, `<n> quitting` or `<n> unlocked`, `n` copied from the request it answers |
 
 - `0 ready` is what tells Crowbar to ask: without a `state` file, Guide opens at once, game running. This works for every launch format (`crowbar.json`, `ps4rt_launch.py`, `run.py`, native launchers); `features.pause` only documents it.
 - Check `request` about ten times a second from the game loop (it is a tiny file; only a new `n` matters).
@@ -186,6 +206,12 @@ The exchange goes through two small text files in `PS4RT_CONTROL_DIR`, each writ
 - When Crowbar or the game closes, the game is never left paused: Crowbar sends `resume` first.
 
 The SDK does it in two calls (its first `crowbar_poll()` writes `0 ready`): `crowbar_poll()` returns `CROWBAR_PAUSE`, `CROWBAR_RESUME` or `CROWBAR_NONE`, and `crowbar_answer(1 or 0)` replies (C); `crowbar.poll()` and `crowbar.answer(True or False)` in Python.
+
+### Quit from Crowbar (optional, SDK 1.4)
+
+When the player quits the game from Crowbar's Guide, Crowbar first asks the runtime, in the same files: `<n> quit`. The runtime saves what must be saved (settings, trophy state; never the game's own save, which only the game writes), answers `<n> quitting`, and exits **with code 0 within 2 seconds**. After 2 seconds, or without an answer, Crowbar closes the process and its children itself; a game closed that way is never reported as a crash.
+
+The SDK: `crowbar_poll()` returns `CROWBAR_QUIT`, then `crowbar_answer(1)` (C); `crowbar.poll()` returns `"quit"` (Python).
 
 ### Unlock on request: Crowbar's trophy test profile (optional, SDK 1.3)
 

@@ -121,6 +121,8 @@ The SDK does all of this: `crowbar_unlock(id)` in C (`sdk/c/`), `crowbar.unlock(
 
 Crowbar reads the file **every 2 seconds during the game** (live notification), and again when the game ends. It copies new unlocks into its own database, so they survive a reinstall or a new runtime version. It also notes whether mods or patches were active (`mods.json`, `patches.json`), for a future "no mods" mode; the runtime does nothing for that.
 
+With Friends turned on, Crowbar tells the player's online friends about each new unlock (trophy name and grade, read from the player's own dump), and friends can compare trophies (numbers and dates only). The runtime does nothing for that, and nothing else is sent.
+
 ### In-game trophy card (optional, `"trophyCard": true`)
 
 If the runtime draws its own card when a trophy pops, Crowbar prepares texts and icons in the player's language and passes the folder in `PS4RT_TROPHY_CARD_DIR`:

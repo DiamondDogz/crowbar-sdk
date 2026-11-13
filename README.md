@@ -9,7 +9,8 @@
 ## What your players get
 
 - **Trophies:** list, icons and descriptions in their language, hidden trophies, read from their own dump. You provide nothing but the unlock.
-- **A card and a notification** when a trophy pops, live during the game.
+- **A card and a notification** when a trophy pops, live during the game. Their online friends get it too, and can compare trophies with them.
+- **A real pause from the Guide button** (optional): the game stops while Crowbar's menu is open, and the Guide politely refuses when the game cannot stop (a cutscene, for example), as on a console. Two calls with the SDK: `crowbar_poll()` and `crowbar_answer()`.
 - **A profile:** level, totals, per-game progress.
 - **Downloads and updates** from the catalog, each file checked against its SHA-256.
 - **DLC and game updates** read from their `.pkg` files; you only receive the ones to install.

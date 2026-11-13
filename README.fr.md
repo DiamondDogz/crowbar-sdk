@@ -9,7 +9,8 @@
 ## Ce que vos joueurs y gagnent
 
 - **Trophées** : liste, icônes et descriptions dans leur langue, trophées cachés, lus dans leur propre dump. Vous ne fournissez que le déblocage.
-- **Une carte et une notification** quand un trophée tombe, en direct pendant la partie.
+- **Une carte et une notification** quand un trophée tombe, en direct pendant la partie. Leurs amis en ligne sont prévenus aussi, et peuvent comparer leurs trophées.
+- **Une vraie pause avec le bouton Guide** (facultatif) : le jeu s'arrête pendant que le menu de Crowbar est ouvert, et le Guide refuse poliment quand le jeu ne peut pas s'arrêter (une cinématique, par exemple), comme sur console. Deux appels avec le SDK : `crowbar_poll()` et `crowbar_answer()`.
 - **Un profil** : niveau, totaux, progression par jeu.
 - **Téléchargement et mises à jour** depuis le catalogue, chaque fichier vérifié par son SHA-256.
 - **DLC et mises à jour du jeu** lus dans leurs `.pkg` ; vous ne recevez que ceux à installer.

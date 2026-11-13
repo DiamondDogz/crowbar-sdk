@@ -179,6 +179,7 @@ The exchange goes through two small text files in `PS4RT_CONTROL_DIR`, each writ
 - Check `request` about ten times a second from the game loop (it is a tiny file; only a new `n` matters).
 - `pause`: answer within **300 ms**. `paused` once the game is stopped, `refused` when it cannot stop now. Without an answer in time, Crowbar opens the menu anyway, game running.
 - `resume`: start again, then answer `running`. Crowbar does not wait for it.
+- **The controller belongs to Crowbar while paused.** The game must ignore it (Crowbar's menu uses it), and after `resume` it keeps ignoring every button still held until it is released: the press that resumed the game is not the game's. Crowbar also waits for the buttons to be released before sending `resume`, but other programs can read the controller too, so the runtime filters it itself.
 - When Crowbar or the game closes, the game is never left paused: Crowbar sends `resume` first.
 
 The SDK does it in two calls (its first `crowbar_poll()` writes `0 ready`): `crowbar_poll()` returns `CROWBAR_PAUSE`, `CROWBAR_RESUME` or `CROWBAR_NONE`, and `crowbar_answer(1 or 0)` replies (C); `crowbar.poll()` and `crowbar.answer(True or False)` in Python.

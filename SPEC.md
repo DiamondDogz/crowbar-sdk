@@ -38,7 +38,8 @@ At the root of the runtime, the folder players unpack from your release.
     "dlc": ["--dlc-pkg", "{file}"],
     "updatePkg": ["--update-pkg", "{file}"],
     "updateFolder": ["--update-extracted", "{dir}"],
-    "noDialogs": ["--no-dialogs"]
+    "noDialogs": ["--no-dialogs"],
+    "pause": true
   }
 }
 ```
@@ -153,6 +154,7 @@ Crowbar adds these variables. Read the ones you need, ignore the rest.
 | `PS4RT_TROPHY_CARD_DIR` | Card texts and icons (§2) | when `trophyCard` is true |
 | `PS4RT_LANGUAGE` | Game language, PS4 number (1 English, 2 French, 3 Spanish, 4 German…) | when the player picked one |
 | `PS4RT_TROPHY_LANG` | Same, as a short code (`en`, `fr`…) | when the player picked one |
+| `PS4RT_CONTROL_DIR` | The folder of pause requests (§4) | when `pause` is true |
 
 ## 4. Features: DLC, updates, dialogs
 
@@ -160,6 +162,25 @@ Crowbar adds these variables. Read the ones you need, ignore the rest.
 - **`updatePkg`** / **`updateFolder`**: a game update, only when the player asks for it, since it changes the game folder.
 - **`noDialogs`**: added on every launch. Crowbar shows errors itself; the runtime must not open blocking windows.
 - **`trophies`**, **`trophyCard`**: `true` when the runtime records unlocks / reads the card folder.
+- **`pause`**: `true` when the game can be paused from Crowbar's Guide menu (below).
+
+### Pause from the Guide (optional, `"pause": true`)
+
+When the player presses Guide during a game, Crowbar asks the runtime to pause. **The game decides:** if it can pause now, its loop and sound stop and the Guide menu opens over it; if it cannot (a cutscene, a loading screen, a network exchange…), it refuses and the Guide does not open, as on a console. A runtime without `pause` keeps running under the menu.
+
+The exchange goes through two small text files in `PS4RT_CONTROL_DIR`, each written whole (a temporary file, then renamed):
+
+| File | Written by | Content |
+| --- | --- | --- |
+| `request` | Crowbar | `<n> pause` or `<n> resume`, `n` growing with each request |
+| `state` | the runtime | `<n> paused`, `<n> refused` or `<n> running`, `n` copied from the request it answers |
+
+- Check `request` about ten times a second from the game loop (it is a tiny file; only a new `n` matters).
+- `pause`: answer within **300 ms**. `paused` once the game is stopped, `refused` when it cannot stop now. Without an answer in time, Crowbar opens the menu anyway, game running.
+- `resume`: start again, then answer `running`. Crowbar does not wait for it.
+- When Crowbar or the game closes, the game is never left paused: Crowbar sends `resume` first.
+
+The SDK does it in two calls: `crowbar_poll()` returns `CROWBAR_PAUSE`, `CROWBAR_RESUME` or `CROWBAR_NONE`, and `crowbar_answer(1 or 0)` replies (C); `crowbar.poll()` and `crowbar.answer(True or False)` in Python.
 
 When the game ends, its exit code and output go to Crowbar's launch log. A non-zero code within 30 seconds opens that log with a **Copy report** button.
 

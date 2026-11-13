@@ -32,6 +32,7 @@ Create it at the root of what players unpack. Start from the handout's proposal 
 - `data`: where the runtime keeps saves and settings. Only add `settings` if Crowbar should manage that `.ini`.
 - `features`: declare only what the runtime really supports. Check each flag in its argument parser before adding `dlc`, `updatePkg`, `updateFolder` or `noDialogs`.
 - `options` (with `settings`): the settings Crowbar shows for this runtime. Read the code that parses the `.ini`: each key, the values it accepts, the default when the key is missing. Declare what a player should change (resolution, display mode, upscaler, frame rate…), with English labels and French if you can. Never invent a key or a value the code does not accept. When the runtime gains an option later, adding it here is all it takes: Crowbar follows. Format: SPEC.md, settings screen.
+- `features.pause`: only when the emulator can stop its game loop and sound on request. Call `crowbar_poll()` about ten times a second from the main loop; on `CROWBAR_PAUSE`, stop and `crowbar_answer(1)`, or `crowbar_answer(0)` when pausing now would break something (a cutscene the runtime cannot freeze, a loading screen, a network exchange); on `CROWBAR_RESUME`, start again and `crowbar_answer(1)`. Answer a pause within 300 ms. Never declare it without that code. Format: SPEC.md §4.
 
 If the source tree is not what players unpack (a build step produces the release), `crowbar.json` must end up at the root of the **release archive**: add it to the packaging script, and say so to the developer.
 

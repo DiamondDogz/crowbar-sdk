@@ -79,6 +79,10 @@
         "trophyCard": {
           "type": "boolean"
         },
+        "pause": {
+          "type": "boolean",
+          "description": "The game can be paused from Crowbar's Guide menu through PS4RT_CONTROL_DIR (SPEC §4)."
+        },
         "dlc": {
           "$ref": "#/$defs/args",
           "contains": {

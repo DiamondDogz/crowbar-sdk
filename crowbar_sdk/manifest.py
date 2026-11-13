@@ -13,7 +13,7 @@ from pathlib import Path
 FORMAT = 1
 PLATFORMS = ("windows", "linux")
 PLACEHOLDERS = {"game", "data", "titleId", "runtime", "file", "dir"}
-FEATURE_FLAGS = ("trophies", "trophyCard")
+FEATURE_FLAGS = ("trophies", "trophyCard", "pause")
 FEATURE_ARGS = {
     "dlc": "{file}",
     "updatePkg": "{file}",

@@ -16,7 +16,7 @@ import os
 import re
 import threading
 
-SDK_VERSION = "1.0.0"
+SDK_VERSION = "1.2.0"
 MAX_TROPHIES = 128
 
 _lock = threading.Lock()
@@ -72,3 +72,37 @@ def unlock(trophy_id: int, path: str | None = None) -> bool:
             f.write("\n")
         os.replace(tmp, path)
         return True
+
+
+# ---- Pause from the Guide ("pause": true, SPEC section 4) ----
+
+_last = {"seq": 0, "kind": None}
+
+
+def poll() -> str | None:
+    """A new request from Crowbar's Guide: "pause", "resume", or None. Call about ten times a second."""
+    d = os.environ.get("PS4RT_CONTROL_DIR")
+    if not d:
+        return None
+    try:
+        with open(os.path.join(d, "request"), encoding="utf-8") as f:
+            seq, word = f.read().split()[:2]
+        seq = int(seq)
+    except (OSError, ValueError):
+        return None
+    if seq <= _last["seq"] or word not in ("pause", "resume"):
+        return None
+    _last["seq"], _last["kind"] = seq, word
+    return word
+
+
+def answer(ok: bool = True) -> None:
+    """Reply to the last request: for "pause", True once paused or False when it cannot pause now."""
+    d = os.environ.get("PS4RT_CONTROL_DIR")
+    if not d or not _last["kind"]:
+        return
+    word = ("paused" if ok else "refused") if _last["kind"] == "pause" else "running"
+    path = os.path.join(d, "state")
+    with open(path + ".tmp", "w", encoding="utf-8") as f:
+        f.write(f"{_last['seq']} {word}\n")
+    os.replace(path + ".tmp", path)

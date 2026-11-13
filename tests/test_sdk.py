@@ -231,3 +231,25 @@ class Launch(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+def test_pause_exchange(tmp_path, monkeypatch):
+    import importlib.util
+    spec = importlib.util.spec_from_file_location("crowbar_helper", str(Path(__file__).resolve().parents[1] / "sdk" / "python" / "crowbar.py"))
+    cb = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(cb)
+    monkeypatch.setenv("PS4RT_CONTROL_DIR", str(tmp_path))
+    assert cb.poll() is None
+    (tmp_path / "request").write_text("1 pause\n")
+    assert cb.poll() == "pause"
+    assert cb.poll() is None, "the same request is returned once"
+    cb.answer(False)
+    assert (tmp_path / "state").read_text().split() == ["1", "refused"]
+    (tmp_path / "request").write_text("2 pause\n")
+    assert cb.poll() == "pause"
+    cb.answer(True)
+    assert (tmp_path / "state").read_text().split() == ["2", "paused"]
+    (tmp_path / "request").write_text("3 resume\n")
+    assert cb.poll() == "resume"
+    cb.answer()
+    assert (tmp_path / "state").read_text().split() == ["3", "running"]

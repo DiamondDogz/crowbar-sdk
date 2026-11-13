@@ -15,7 +15,7 @@
 extern "C" {
 #endif
 
-#define CROWBAR_SDK_VERSION "1.0.0"
+#define CROWBAR_SDK_VERSION "1.2.0"
 #define CROWBAR_MAX_TROPHIES 128 /* a PS4 trophy set holds ids 0..127 */
 
 /*
@@ -32,6 +32,19 @@ const char *crowbar_trophy_file(void);
 
 /* Crowbar's version when the runtime was started by Crowbar ($CROWBAR), else NULL. */
 const char *crowbar_version(void);
+
+/*
+ * Pause from Crowbar's Guide menu ("pause": true in crowbar.json, SPEC section 4).
+ * Call crowbar_poll() about ten times a second from the game loop: it returns a new
+ * request, or CROWBAR_NONE (also when the game was not started by Crowbar).
+ * Then reply with crowbar_answer(): for CROWBAR_PAUSE, 1 once the game is paused or
+ * 0 when it cannot pause now (within 300 ms); for CROWBAR_RESUME, 1 once it runs again.
+ */
+#define CROWBAR_NONE 0
+#define CROWBAR_PAUSE 1
+#define CROWBAR_RESUME 2
+int crowbar_poll(void);
+void crowbar_answer(int ok);
 
 #ifdef __cplusplus
 }

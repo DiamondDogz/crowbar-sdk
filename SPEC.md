@@ -156,7 +156,8 @@ Crowbar adds these variables. Read the ones you need, ignore the rest.
 | `PS4RT_TROPHY_CARD_DIR` | Card texts and icons (§2) | when `trophyCard` is true |
 | `PS4RT_LANGUAGE` | Game language, PS4 number (1 English, 2 French, 3 Spanish, 4 German…) | when the player picked one |
 | `PS4RT_TROPHY_LANG` | Same, as a short code (`en`, `fr`…) | when the player picked one |
-| `PS4RT_CONTROL_DIR` | The folder of pause requests (§4) | every runtime |
+| `PS4RT_CONTROL_DIR` | The folder of pause and unlock requests (§4) | every runtime |
+| `PS4RT_ACHIEVEMENTS_DIR` | A separate folder for the runtime's own trophy state, test profile only (§4) | every runtime, test profile only |
 
 ## 4. Features: DLC, updates, dialogs
 
@@ -174,8 +175,8 @@ The exchange goes through two small text files in `PS4RT_CONTROL_DIR`, each writ
 
 | File | Written by | Content |
 | --- | --- | --- |
-| `request` | Crowbar | `<n> pause` or `<n> resume`, `n` growing with each request |
-| `state` | the runtime | `0 ready` as soon as it starts, then `<n> paused`, `<n> refused` or `<n> running`, `n` copied from the request it answers |
+| `request` | Crowbar | `<n> pause`, `<n> resume` or `<n> unlock <id>` (below), `n` growing with each request |
+| `state` | the runtime | `0 ready` as soon as it starts, then `<n> paused`, `<n> refused`, `<n> running` or `<n> unlocked`, `n` copied from the request it answers |
 
 - `0 ready` is what tells Crowbar to ask: without a `state` file, Guide opens at once, game running. This works for every launch format (`crowbar.json`, `ps4rt_launch.py`, `run.py`, native launchers); `features.pause` only documents it.
 - Check `request` about ten times a second from the game loop (it is a tiny file; only a new `n` matters).
@@ -185,6 +186,16 @@ The exchange goes through two small text files in `PS4RT_CONTROL_DIR`, each writ
 - When Crowbar or the game closes, the game is never left paused: Crowbar sends `resume` first.
 
 The SDK does it in two calls (its first `crowbar_poll()` writes `0 ready`): `crowbar_poll()` returns `CROWBAR_PAUSE`, `CROWBAR_RESUME` or `CROWBAR_NONE`, and `crowbar_answer(1 or 0)` replies (C); `crowbar.poll()` and `crowbar.answer(True or False)` in Python.
+
+### Unlock on request: Crowbar's trophy test profile (optional, SDK 1.3)
+
+To check the whole trophy chain without playing, a developer turns on Crowbar's **test profile** (developer mode): Crowbar then keeps a separate trophy list, and asks the running game to unlock a trophy through the same files:
+
+- `request`: `<n> unlock <id>`, a trophy not yet earned in the test profile (never the platinum).
+- The runtime unlocks it **through its own path**, as if the game had called `sceNpTrophyUnlockTrophy` (its trophy file, its own state and its own card if it has one), then answers `<n> unlocked`, or `<n> refused` when it cannot now (before the game registered its trophies, for example). Crowbar waits 1.5 s, then falls back to a test of its own side only.
+- In the test profile, Crowbar points `PS4RT_TROPHY_FILE` to a separate file, and `PS4RT_ACHIEVEMENTS_DIR` to a separate folder: a runtime that keeps more trophy state of its own (what the game reads back) keeps it there, so the player's real trophies are never touched. Resetting the test profile deletes both.
+
+The SDK: `crowbar_poll()` returns `CROWBAR_UNLOCK`, `crowbar_request_trophy()` gives the number, `crowbar_answer(1 or 0)` replies (C); `crowbar.poll()` returns `"unlock"` and `crowbar.request_trophy()` the number (Python).
 
 When the game ends, its exit code and output go to Crowbar's launch log. A non-zero code within 30 seconds opens that log with a **Copy report** button.
 

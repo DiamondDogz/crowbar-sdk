@@ -161,6 +161,8 @@ static int crowbar_last_kind = CROWBAR_NONE;
 
 static int crowbar_said_ready = 0;
 
+static int crowbar_last_trophy = -1;
+
 int crowbar_poll(void) {
     const char *dir = getenv("PS4RT_CONTROL_DIR");
     if (!dir || !*dir) return CROWBAR_NONE;
@@ -182,13 +184,18 @@ int crowbar_poll(void) {
     if (!in) return CROWBAR_NONE;
     long seq = 0;
     char word[16] = {0};
-    int got = fscanf(in, "%ld %15s", &seq, word);
+    int arg = -1;
+    int got = fscanf(in, "%ld %15s %d", &seq, word, &arg);
     fclose(in);
-    if (got != 2 || seq <= crowbar_last_seq) return CROWBAR_NONE;
+    if (got < 2 || seq <= crowbar_last_seq) return CROWBAR_NONE;
     crowbar_last_seq = seq;
-    crowbar_last_kind = !strcmp(word, "pause") ? CROWBAR_PAUSE : !strcmp(word, "resume") ? CROWBAR_RESUME : CROWBAR_NONE;
+    crowbar_last_kind = !strcmp(word, "pause") ? CROWBAR_PAUSE : !strcmp(word, "resume") ? CROWBAR_RESUME
+                      : (!strcmp(word, "unlock") && got == 3 && arg >= 0 && arg < CROWBAR_MAX_TROPHIES) ? CROWBAR_UNLOCK : CROWBAR_NONE;
+    crowbar_last_trophy = crowbar_last_kind == CROWBAR_UNLOCK ? arg : -1;
     return crowbar_last_kind;
 }
+
+int crowbar_request_trophy(void) { return crowbar_last_trophy; }
 
 void crowbar_answer(int ok) {
     const char *dir = getenv("PS4RT_CONTROL_DIR");
@@ -198,7 +205,8 @@ void crowbar_answer(int ok) {
     snprintf(tmp, sizeof(tmp), "%s.tmp", path);
     FILE *out = fopen(tmp, "wb");
     if (!out) return;
-    const char *word = crowbar_last_kind == CROWBAR_PAUSE ? (ok ? "paused" : "refused") : "running";
+    const char *word = crowbar_last_kind == CROWBAR_PAUSE ? (ok ? "paused" : "refused")
+                     : crowbar_last_kind == CROWBAR_UNLOCK ? (ok ? "unlocked" : "refused") : "running";
     fprintf(out, "%ld %s\n", crowbar_last_seq, word);
     if (fclose(out) != 0 || crowbar_replace(tmp, path) != 0) remove(tmp);
 }

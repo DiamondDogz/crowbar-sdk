@@ -15,7 +15,7 @@
 extern "C" {
 #endif
 
-#define CROWBAR_SDK_VERSION "1.2.0"
+#define CROWBAR_SDK_VERSION "1.3.0"
 #define CROWBAR_MAX_TROPHIES 128 /* a PS4 trophy set holds ids 0..127 */
 
 /*
@@ -43,8 +43,12 @@ const char *crowbar_version(void);
 #define CROWBAR_NONE 0
 #define CROWBAR_PAUSE 1
 #define CROWBAR_RESUME 2
+/* SDK 1.3, Crowbar's trophy test profile: unlock trophy crowbar_request_trophy() as if the game
+ * had (through your own unlock path), then crowbar_answer(1), or 0 when it cannot now. */
+#define CROWBAR_UNLOCK 3
 int crowbar_poll(void);
 void crowbar_answer(int ok);
+int crowbar_request_trophy(void);
 
 #ifdef __cplusplus
 }

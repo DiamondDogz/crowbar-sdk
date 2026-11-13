@@ -254,3 +254,10 @@ def test_pause_exchange(tmp_path, monkeypatch):
     assert cb.poll() == "resume"
     cb.answer()
     assert (tmp_path / "state").read_text().split() == ["3", "running"]
+    (tmp_path / "request").write_text("4 unlock 12\n")
+    assert cb.poll() == "unlock"
+    assert cb.request_trophy() == 12
+    cb.answer(True)
+    assert (tmp_path / "state").read_text().split() == ["4", "unlocked"]
+    (tmp_path / "request").write_text("5 unlock 200\n")
+    assert cb.poll() is None, "a trophy number outside 0..127 is ignored"

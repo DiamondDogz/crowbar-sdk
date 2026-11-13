@@ -159,10 +159,24 @@ int crowbar_unlock(int id) {
 static long crowbar_last_seq = 0;
 static int crowbar_last_kind = CROWBAR_NONE;
 
+static int crowbar_said_ready = 0;
+
 int crowbar_poll(void) {
     const char *dir = getenv("PS4RT_CONTROL_DIR");
     if (!dir || !*dir) return CROWBAR_NONE;
     char path[4096];
+    if (!crowbar_said_ready) {
+        /* "0 ready": tells Crowbar this runtime answers pause requests. */
+        char state[4096], tmp[4200];
+        snprintf(state, sizeof(state), "%s/state", dir);
+        snprintf(tmp, sizeof(tmp), "%s.tmp", state);
+        FILE *out = fopen(tmp, "wb");
+        if (out) {
+            fputs("0 ready\n", out);
+            if (fclose(out) == 0 && crowbar_replace(tmp, state) == 0) crowbar_said_ready = 1;
+            else remove(tmp);
+        }
+    }
     snprintf(path, sizeof(path), "%s/request", dir);
     FILE *in = fopen(path, "rb");
     if (!in) return CROWBAR_NONE;

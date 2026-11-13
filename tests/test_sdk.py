@@ -240,6 +240,7 @@ def test_pause_exchange(tmp_path, monkeypatch):
     spec.loader.exec_module(cb)
     monkeypatch.setenv("PS4RT_CONTROL_DIR", str(tmp_path))
     assert cb.poll() is None
+    assert (tmp_path / "state").read_text().split() == ["0", "ready"]
     (tmp_path / "request").write_text("1 pause\n")
     assert cb.poll() == "pause"
     assert cb.poll() is None, "the same request is returned once"

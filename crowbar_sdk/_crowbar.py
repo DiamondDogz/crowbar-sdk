@@ -84,6 +84,15 @@ def poll() -> str | None:
     d = os.environ.get("PS4RT_CONTROL_DIR")
     if not d:
         return None
+    if not _last.get("ready"):
+        # "0 ready": tells Crowbar this runtime answers pause requests.
+        try:
+            with open(os.path.join(d, "state.tmp"), "w", encoding="utf-8") as f:
+                f.write("0 ready\n")
+            os.replace(os.path.join(d, "state.tmp"), os.path.join(d, "state"))
+            _last["ready"] = True
+        except OSError:
+            pass
     try:
         with open(os.path.join(d, "request"), encoding="utf-8") as f:
             seq, word = f.read().split()[:2]

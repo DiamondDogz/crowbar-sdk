@@ -154,7 +154,7 @@ Crowbar adds these variables. Read the ones you need, ignore the rest.
 | `PS4RT_TROPHY_CARD_DIR` | Card texts and icons (§2) | when `trophyCard` is true |
 | `PS4RT_LANGUAGE` | Game language, PS4 number (1 English, 2 French, 3 Spanish, 4 German…) | when the player picked one |
 | `PS4RT_TROPHY_LANG` | Same, as a short code (`en`, `fr`…) | when the player picked one |
-| `PS4RT_CONTROL_DIR` | The folder of pause requests (§4) | when `pause` is true |
+| `PS4RT_CONTROL_DIR` | The folder of pause requests (§4) | every runtime |
 
 ## 4. Features: DLC, updates, dialogs
 
@@ -173,14 +173,15 @@ The exchange goes through two small text files in `PS4RT_CONTROL_DIR`, each writ
 | File | Written by | Content |
 | --- | --- | --- |
 | `request` | Crowbar | `<n> pause` or `<n> resume`, `n` growing with each request |
-| `state` | the runtime | `<n> paused`, `<n> refused` or `<n> running`, `n` copied from the request it answers |
+| `state` | the runtime | `0 ready` as soon as it starts, then `<n> paused`, `<n> refused` or `<n> running`, `n` copied from the request it answers |
 
+- `0 ready` is what tells Crowbar to ask: without a `state` file, Guide opens at once, game running. This works for every launch format (`crowbar.json`, `ps4rt_launch.py`, `run.py`, native launchers); `features.pause` only documents it.
 - Check `request` about ten times a second from the game loop (it is a tiny file; only a new `n` matters).
 - `pause`: answer within **300 ms**. `paused` once the game is stopped, `refused` when it cannot stop now. Without an answer in time, Crowbar opens the menu anyway, game running.
 - `resume`: start again, then answer `running`. Crowbar does not wait for it.
 - When Crowbar or the game closes, the game is never left paused: Crowbar sends `resume` first.
 
-The SDK does it in two calls: `crowbar_poll()` returns `CROWBAR_PAUSE`, `CROWBAR_RESUME` or `CROWBAR_NONE`, and `crowbar_answer(1 or 0)` replies (C); `crowbar.poll()` and `crowbar.answer(True or False)` in Python.
+The SDK does it in two calls (its first `crowbar_poll()` writes `0 ready`): `crowbar_poll()` returns `CROWBAR_PAUSE`, `CROWBAR_RESUME` or `CROWBAR_NONE`, and `crowbar_answer(1 or 0)` replies (C); `crowbar.poll()` and `crowbar.answer(True or False)` in Python.
 
 When the game ends, its exit code and output go to Crowbar's launch log. A non-zero code within 30 seconds opens that log with a **Copy report** button.
 

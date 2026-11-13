@@ -1,0 +1,31 @@
+name: Release
+
+# Publishes a version of the SDK: tag vX.Y.Z on main and a GitHub release whose text is
+# notes/vX.Y.Z.md. Started by hand (Actions > Release > Run workflow).
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version, with the v (v1.2.0)"
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check
+        run: |
+          v="${{ inputs.version }}"
+          [[ -f "notes/$v.md" ]] || { echo "notes/$v.md is missing"; exit 1; }
+          grep -q "^version = \"${v#v}\"" pyproject.toml || { echo "pyproject.toml is not at ${v#v}"; exit 1; }
+      - name: Publish
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          v="${{ inputs.version }}"
+          gh release create "$v" --target "$GITHUB_SHA" --title "crowbar-sdk ${v#v}" --notes-file "notes/$v.md"

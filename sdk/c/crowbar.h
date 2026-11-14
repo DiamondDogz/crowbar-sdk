@@ -15,7 +15,7 @@
 extern "C" {
 #endif
 
-#define CROWBAR_SDK_VERSION "1.6.0"
+#define CROWBAR_SDK_VERSION "1.7.0"
 #define CROWBAR_MAX_TROPHIES 128 /* a PS4 trophy set holds ids 0..127 */
 
 /*

@@ -331,3 +331,59 @@ def test_capture_request(tmp_path, monkeypatch):
     cb.answer(True)
     assert (tmp_path / "state").read_text().split() == ["41", "capturing"]
 
+
+
+FAKE_GAME = r'''
+import os, sys, time, struct, zlib
+sys.path.insert(0, sys.argv[1])
+import crowbar
+mode = sys.argv[2]
+while True:
+    w = crowbar.poll()
+    if w == "pause":
+        if mode == "slow":
+            time.sleep(0.6)
+        crowbar.answer(True)
+    elif w == "resume":
+        crowbar.answer()
+    elif w == "unlock":
+        crowbar.unlock(crowbar.request_trophy())
+        crowbar.answer(True)
+    elif w == "capture":
+        crowbar.answer(True)
+        p = crowbar.capture_path()
+        png = b"\x89PNG\r\n\x1a\n" + b"rest"
+        open(p + ".part", "wb").write(png); os.replace(p + ".part", p)
+    elif w == "quit":
+        crowbar.answer()
+        sys.exit(0 if mode != "badexit" else 3)
+    time.sleep(0.02)
+'''
+
+
+def _fake_runtime(tmp_path, mode):
+    rt = tmp_path / "rt"
+    rt.mkdir()
+    (rt / "game.py").write_text(FAKE_GAME)
+    m = {"crowbar": 1, "name": "Fake", "game": "fake", "titleIds": ["CUSA00001"],
+         "launch": {"linux": [sys.executable, "game.py", str(ROOT / "sdk" / "python"), mode],
+                    "windows": [sys.executable, "game.py", str(ROOT / "sdk" / "python"), mode]},
+         "features": {"trophies": True, "pause": True}}
+    (rt / "crowbar.json").write_text(json.dumps(m))
+    return rt
+
+
+def test_runtime_test_passes(tmp_path):
+    from crowbar_sdk import runtime_test
+    r = runtime_test.run(_fake_runtime(tmp_path, "good"), tmp_path, ready_timeout=20)
+    assert r.ok, [s.__dict__ for s in r.steps]
+    assert [s.status for s in r.steps] == ["ok"] * 6, [s.__dict__ for s in r.steps]
+    assert r.exit_code == 0
+
+
+def test_runtime_test_catches_slow_pause_and_bad_exit(tmp_path):
+    from crowbar_sdk import runtime_test
+    r = runtime_test.run(_fake_runtime(tmp_path, "slow"), tmp_path, ready_timeout=20)
+    assert {s.name: s.status for s in r.steps}["pause"] == "error"
+    r = runtime_test.run(_fake_runtime(tmp_path / "x" if (tmp_path / "x").mkdir() is None else tmp_path, "badexit"), tmp_path, ready_timeout=20)
+    assert {s.name: s.status for s in r.steps}["quit"] == "error" and r.exit_code == 3

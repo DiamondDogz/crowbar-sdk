@@ -39,7 +39,11 @@ Collez-lui ceci (Claude, Grok, DeepSeek, Gemini, Copilot…) :
 
 Crowbar a un mode développeur caché. Entrez le code Konami n'importe où dans Crowbar, à la manette ou au clavier : **↑ ↑ ↓ ↓ ← → ← → B A** (au clavier, B et A ou Échap et Entrée). **Paramètres › Développeur** permet alors de pointer votre runtime local, de voir si votre `crowbar.json` est valide, de suivre les lancements et les trophées en direct, de simuler une notification de trophée et de copier une fiche catalogue préremplie. Le même code le cache à nouveau.
 
+Sans Crowbar, `crowbar-check . --runtime-test --game <dump>` démarre votre runtime et vérifie ses réponses : `0 ready`, pause en moins de 300 ms, reprise, trophée sur demande, capture, Quitter avec le code 0 en moins de 2 s.
+
 La spécification complète, les outils et les exemples sont décrits dans le [README anglais](README.md) et dans [SPEC.md](SPEC.md).
+
+La suite : [docs/VISION.md](docs/VISION.md) (en anglais).
 
 ## Licence
 

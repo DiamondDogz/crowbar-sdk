@@ -474,8 +474,17 @@ def main(argv=None) -> int:
     g.add_argument("--json", action="store_true", help="machine-readable report")
     g.add_argument("--handout", action="store_true", help="step-by-step plan for this runtime (Markdown)")
     ap.add_argument("--write-proposal", action="store_true", help="write crowbar.json.proposed when crowbar.json is missing")
+    ap.add_argument("--runtime-test", action="store_true", help="start the runtime and test pause, resume, unlock, capture and quit (needs --game)")
+    ap.add_argument("--game", help="--runtime-test: the extracted game dump (the folder that holds eboot.bin)")
+    ap.add_argument("--title", help="--runtime-test: CUSA id (default: the first of titleIds)")
+    ap.add_argument("--trophy", type=int, default=1, help="--runtime-test: trophy unlocked in the test profile (default 1)")
+    ap.add_argument("--ready-timeout", type=float, default=90.0, help="--runtime-test: seconds to wait for `0 ready` (default 90)")
+    ap.add_argument("--keep", action="store_true", help="--runtime-test: keep the temporary folders and the runtime output")
     ap.add_argument("--version", action="version", version=f"crowbar-check {__version__}")
     a = ap.parse_args(argv)
+    if a.runtime_test:
+        from . import runtime_test
+        return runtime_test.main(a)
     path = Path(a.runtime)
     if not path.exists():
         print(f"crowbar-check: {path} not found", file=sys.stderr)

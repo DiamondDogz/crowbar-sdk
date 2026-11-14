@@ -72,6 +72,14 @@ crowbar-fake . --simulate 14             # writes trophy 14 where Crowbar reads 
 
 You cannot play the game; ask the developer to unlock one trophy and paste what `crowbar-fake` printed.
 
+If the runtime answers pause, quit or unlock requests (`crowbar_poll()`), ask the developer to run the runtime test and paste its output:
+
+```sh
+crowbar-check . --runtime-test --game /path/to/dump
+```
+
+It starts the runtime with temporary folders (the player's trophies are never touched) and checks `0 ready`, pause within 300 ms, resume, unlock on request, screenshot on request and quit with code 0 within 2 s. Fix every ✗ line.
+
 If the developer uses Crowbar itself to test: the Konami code (↑ ↑ ↓ ↓ ← → ← → B A) unlocks **Settings › Developer**, where they can point Crowbar at the local runtime folder and watch trophies arrive live.
 
 ## 5. Hand over

@@ -57,6 +57,7 @@ The same code hides it again.
 | [`sdk/python/crowbar.py`](sdk/python/crowbar.py) | The same for Python launch scripts |
 | `crowbar-check` | Checks a runtime folder or release archive; `--json` for agents and CI, `--handout` for a step-by-step plan |
 | `crowbar-fake` | Runs your runtime exactly as Crowbar would and prints each trophy it records, without installing Crowbar |
+| `crowbar-check --runtime-test` | Starts your runtime with a dump and checks its answers: `0 ready`, pause within 300 ms, resume, trophy on request, screenshot, quit with code 0 within 2 s |
 | [`schema/crowbar.schema.json`](schema/crowbar.schema.json) | JSON Schema for editors |
 | [`templates/`](templates) | Example `crowbar.json` files and release workflows (Linux, and Windows: stable or pre-release by suffix) that publish your archive with its `.sha256` |
 | [`docs/WINDOWS.md`](docs/WINDOWS.md) | Porting a runtime to Windows: the traps that compile fine and fail in the game |
@@ -65,9 +66,12 @@ The same code hides it again.
 pip install git+https://github.com/DiamondDogz/crowbar-sdk
 crowbar-check path/to/runtime --handout
 crowbar-fake path/to/runtime --game path/to/dump
+crowbar-check path/to/runtime --runtime-test --game path/to/dump
 ```
 
 Python 3.9+, no dependency, nothing ever sent over the network.
+
+Where this is going: [docs/VISION.md](docs/VISION.md).
 
 ## What the SDK does not do
 

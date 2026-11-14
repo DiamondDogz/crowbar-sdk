@@ -319,3 +319,15 @@ def test_sdk_15(tmp_path, monkeypatch):
     assert text.startswith("status=Chapter 3, Imperial Theater x") and "online=1" in text and len(text.splitlines()[0]) == len("status=") + 80
     assert cb.capture_dir() == str(tmp_path / "shots")
 
+
+def test_capture_request(tmp_path, monkeypatch):
+    import crowbar_sdk._crowbar as cb
+    monkeypatch.setenv("PS4RT_CONTROL_DIR", str(tmp_path))
+    monkeypatch.setenv("PS4RT_CAPTURE_DIR", str(tmp_path / "shots"))
+    cb._last.update({"seq": 0, "kind": None, "trophy": -1})
+    (tmp_path / "request").write_text("41 capture 7\n")
+    assert cb.poll() == "capture" and cb.request_trophy() == 7
+    assert cb.capture_path() == str(tmp_path / "shots" / "trophy-7-41.png")
+    cb.answer(True)
+    assert (tmp_path / "state").read_text().split() == ["41", "capturing"]
+

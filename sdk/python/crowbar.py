@@ -16,7 +16,7 @@ import os
 import re
 import threading
 
-SDK_VERSION = "1.5.0"
+SDK_VERSION = "1.6.0"
 MAX_TROPHIES = 128
 
 _lock = threading.Lock()
@@ -81,7 +81,8 @@ _last = {"seq": 0, "kind": None}
 
 def poll() -> str | None:
     """A new request from Crowbar: "pause", "resume", "unlock" (test profile: see request_trophy()),
-    "quit" (save, answer(), exit with code 0 within 2 s), or None. Call about ten times a second."""
+    "quit" (save, answer(), exit with code 0 within 2 s), "capture" (SDK 1.6: answer(), then save
+    the next game frame to capture_path()), or None. Call about ten times a second."""
     d = os.environ.get("PS4RT_CONTROL_DIR")
     if not d:
         return None
@@ -98,15 +99,23 @@ def poll() -> str | None:
         with open(os.path.join(d, "request"), encoding="utf-8") as f:
             parts = f.read().split()
         seq, word = int(parts[0]), parts[1]
-        trophy = int(parts[2]) if word == "unlock" and len(parts) > 2 else -1
+        trophy = int(parts[2]) if word in ("unlock", "capture") and len(parts) > 2 else -1
     except (OSError, ValueError, IndexError):
         return None
-    if seq <= _last["seq"] or word not in ("pause", "resume", "unlock", "quit"):
+    if seq <= _last["seq"] or word not in ("pause", "resume", "unlock", "quit", "capture"):
         return None
-    if word == "unlock" and not 0 <= trophy < 128:
+    if word in ("unlock", "capture") and not 0 <= trophy < 128:
         return None
     _last["seq"], _last["kind"], _last["trophy"] = seq, word, trophy
     return word
+
+
+def capture_path() -> str | None:
+    """SDK 1.6: where to save the screenshot of the last "capture" request, or None."""
+    d = os.environ.get("PS4RT_CAPTURE_DIR")
+    if not d or _last.get("kind") != "capture":
+        return None
+    return os.path.join(d, f"trophy-{_last['trophy']}-{_last['seq']}.png")
 
 
 def request_trophy() -> int:
@@ -119,7 +128,7 @@ def answer(ok: bool = True) -> None:
     d = os.environ.get("PS4RT_CONTROL_DIR")
     if not d or not _last["kind"]:
         return
-    word = {"pause": "paused" if ok else "refused", "unlock": "unlocked" if ok else "refused", "quit": "quitting"}.get(_last["kind"], "running")
+    word = {"pause": "paused" if ok else "refused", "unlock": "unlocked" if ok else "refused", "quit": "quitting", "capture": "capturing" if ok else "refused"}.get(_last["kind"], "running")
     path = os.path.join(d, "state")
     with open(path + ".tmp", "w", encoding="utf-8") as f:
         f.write(f"{_last['seq']} {word}\n")

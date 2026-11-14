@@ -198,8 +198,8 @@ The exchange goes through two small text files in `PS4RT_CONTROL_DIR`, each writ
 
 | File | Written by | Content |
 | --- | --- | --- |
-| `request` | Crowbar | `<n> pause`, `<n> resume`, `<n> quit` or `<n> unlock <id>` (below), `n` growing with each request |
-| `state` | the runtime | `0 ready` as soon as it starts, then `<n> paused`, `<n> refused`, `<n> running`, `<n> quitting` or `<n> unlocked`, `n` copied from the request it answers |
+| `request` | Crowbar | `<n> pause`, `<n> resume`, `<n> quit`, `<n> unlock <id>` or `<n> capture <id>` (below), `n` growing with each request |
+| `state` | the runtime | `0 ready` as soon as it starts, then `<n> paused`, `<n> refused`, `<n> running`, `<n> quitting`, `<n> unlocked` or `<n> capturing`, `n` copied from the request it answers |
 
 - `0 ready` is what tells Crowbar to ask: without a `state` file, Guide opens at once, game running. This works for every launch format (`crowbar.json`, `ps4rt_launch.py`, `run.py`, native launchers); `features.pause` only documents it.
 - Check `request` about ten times a second from the game loop (it is a tiny file; only a new `n` matters).
@@ -215,6 +215,12 @@ The SDK does it in two calls (its first `crowbar_poll()` writes `0 ready`): `cro
 When the player quits the game from Crowbar's Guide, Crowbar first asks the runtime, in the same files: `<n> quit`. The runtime saves what must be saved (settings, trophy state; never the game's own save, which only the game writes), answers `<n> quitting`, and exits **with code 0 within 2 seconds**. After 2 seconds, or without an answer, Crowbar closes the process and its children itself; a game closed that way is never reported as a crash.
 
 The SDK: `crowbar_poll()` returns `CROWBAR_QUIT`, then `crowbar_answer(1)` (C); `crowbar.poll()` returns `"quit"` (Python).
+
+### Screenshot on a trophy (optional, SDK 1.6)
+
+With the player's **Screenshot on every trophy** setting on, Crowbar asks the running game for a picture the moment a trophy unlocks: `<n> capture <id>`. The runtime answers `<n> capturing` at once, then saves its **next presented game frame**, without its own overlay or menus, as `trophy-<id>-<n>.png` in `PS4RT_CAPTURE_DIR` (written whole: a temporary name, then renamed). Crowbar waits 0.8 s for the answer; without it, it takes the screen itself on Windows (overlays included), and nothing on Linux. The picture then shows in Crowbar's Trophies, on that trophy, and in the game's Captures.
+
+The SDK: `crowbar_poll()` returns `CROWBAR_CAPTURE`, `crowbar_request_trophy()` gives the id and `crowbar_capture_name()` the file name to write, then `crowbar_answer(1)` (C); `crowbar.poll()` returns `"capture"`, `crowbar.capture_path()` the full path (Python).
 
 ### Unlock on request: Crowbar's trophy test profile (optional, SDK 1.3)
 

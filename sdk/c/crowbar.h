@@ -15,7 +15,7 @@
 extern "C" {
 #endif
 
-#define CROWBAR_SDK_VERSION "1.5.0"
+#define CROWBAR_SDK_VERSION "1.6.0"
 #define CROWBAR_MAX_TROPHIES 128 /* a PS4 trophy set holds ids 0..127 */
 
 /*
@@ -49,9 +49,15 @@ const char *crowbar_version(void);
 /* SDK 1.4: the player quit from Crowbar. Save what must be saved, crowbar_answer(1), then exit
  * with code 0 within 2 seconds; Crowbar closes the process itself after that. */
 #define CROWBAR_QUIT 4
+/* SDK 1.6: a trophy just unlocked and the player wants a screenshot of it. crowbar_answer(1), then
+ * save the next presented game frame (without overlays) as crowbar_capture_name() in
+ * crowbar_capture_dir(), written whole (a temporary name, then renamed). */
+#define CROWBAR_CAPTURE 5
 int crowbar_poll(void);
 void crowbar_answer(int ok);
 int crowbar_request_trophy(void);
+/* SDK 1.6: "trophy-<id>-<n>.png" for the last CROWBAR_CAPTURE request, or NULL. */
+const char *crowbar_capture_name(void);
 
 /*
  * SDK 1.5: what the player is doing, shown to their friends and on Discord ("Chapter 3, Imperial

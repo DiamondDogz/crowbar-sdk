@@ -99,6 +99,7 @@ With `settings`, Crowbar has a settings screen for the game. `options` says what
 | `hint` | Optional line under the label, same form |
 | `values` | At least two `[value, label]` pairs, in the order shown. The value is written to the `.ini` as is |
 | `default` | The value the runtime uses when the key is missing. Must be one of `values` |
+| `titleIds` | Optional (SDK 1.8): the games this setting is for, among the runtime's `titleIds`. Crowbar shows it only on those games' settings screens; without it, on every game. The same `key` may then appear more than once, each time for other games |
 
 Crowbar writes only the keys the player changed and keeps every other line of the file. Declare what a player should change, read from the code that parses the `.ini`; leave internal or debug keys out. Without `options`, Crowbar falls back to the list in the [catalog](https://github.com/DiamondDogz/crowbar-catalog) entry (`"options": {"windows": [...], "linux": [...]}`, same items, kept by the catalog maintainers for runtimes that do not declare theirs), then to its own built-in list.
 
@@ -185,7 +186,7 @@ Crowbar adds these variables. Read the ones you need, ignore the rest.
 ## 4. Features: DLC, updates, dialogs
 
 - **`dlc`**: Crowbar reads the player's DLC `.pkg` files and passes only those not installed yet, the arguments repeated once per file. A DLC counts as installed when `{data}/player-content/dlc/<label>` exists, the label being the last 16 characters of its Content ID (`NEWSAKURADLC0001`).
-- **`updatePkg`** / **`updateFolder`**: a game update, only when the player asks for it, since it changes the game folder.
+- **`updatePkg`** / **`updateFolder`**: a game update, only when the player asks for it, since it changes the game folder. A runtime that keeps the game folder untouched and applies the update at every start instead may keep the unpacked update in `{data}/player-content/update/<titleId>/` (SDK 1.8): Crowbar then reads its `sce_sys/param.sfo` and shows that version as installed in the game's Add-ons.
 - **`noDialogs`**: added on every launch. Crowbar shows errors itself; the runtime must not open blocking windows.
 - **`trophies`**, **`trophyCard`**: `true` when the runtime records unlocks / reads the card folder.
 - **`pause`**: `true` when the game can be paused from Crowbar's Guide menu (below).

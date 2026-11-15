@@ -16,7 +16,7 @@ import os
 import re
 import threading
 
-SDK_VERSION = "1.7.0"
+SDK_VERSION = "1.8.0"
 MAX_TROPHIES = 128
 
 _lock = threading.Lock()

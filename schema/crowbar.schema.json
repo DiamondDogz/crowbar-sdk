@@ -150,6 +150,15 @@
           },
           "default": {
             "type": "string"
+          },
+          "titleIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "pattern": "^(CUSA|PLJS|PLJM|PCJS|PCAS|PLAS)[0-9]{5}$"
+            },
+            "minItems": 1,
+            "description": "SDK 1.8: the games this setting is shown for (among the runtime's titleIds); without it, every game."
           }
         }
       }

@@ -275,6 +275,7 @@ def environment(m: dict, root: Path, game: Path, title_id: str, crowbar_version:
 
 
 OPTION_KEY = re.compile(r"^[A-Za-z0-9_.\-]+$")
+TITLE_ID = re.compile(r"^(CUSA|PLJS|PLJM|PCJS|PCAS|PLAS)\d{5}$")
 
 
 def _text(v) -> bool:
@@ -295,7 +296,7 @@ def check_options(m: dict, report: Report) -> None:
         return
     if not m.get("settings"):
         report.add("error", "options.settings", '"options" needs "settings": Crowbar writes the chosen values to that .ini.', 'Add "settings", e.g. "{data}/ps4rt.ini".', F)
-    seen = set()
+    seen: dict = {}
     for i, o in enumerate(opts):
         where = f'"options[{i}]"'
         if not isinstance(o, dict):
@@ -304,10 +305,21 @@ def check_options(m: dict, report: Report) -> None:
         key = o.get("key")
         if not isinstance(key, str) or not OPTION_KEY.match(key):
             report.add("error", "options.key", f"{where}: \"key\" must be the .ini key (letters, digits, _ . -).", "", F)
-        elif key in seen:
-            report.add("error", "options.duplicate", f'Option "{key}" is declared twice.', "", F)
         else:
-            seen.add(key)
+            # SDK 1.8: a key may come back for other games (each time with "titleIds").
+            games = o.get("titleIds")
+            if games is not None:
+                ok_ids = isinstance(games, list) and games and all(isinstance(t, str) and TITLE_ID.match(t) for t in games)
+                if not ok_ids:
+                    report.add("error", "options.titleIds", f'{where}: "titleIds" must list CUSA ids.', 'For example ["CUSA12345"].', F)
+                else:
+                    known = m.get("titleIds") if isinstance(m.get("titleIds"), list) else []
+                    for t in games:
+                        if t not in known:
+                            report.add("warning", "options.titleIds-unknown", f'{where}: {t} is not in the runtime\'s "titleIds".', "Crowbar never shows this setting for it.", F)
+            if key in seen and (games is None or seen[key] is None):
+                report.add("error", "options.duplicate", f'Option "{key}" is declared twice.', 'Declare it once, or each time for other games ("titleIds").', F)
+            seen.setdefault(key, games)
         if not _text(o.get("label")):
             report.add("error", "options.label", f'{where}: "label" must be a text, or {{"en": ..., "fr": ...}} with at least "en".', "", F)
         if "hint" in o and not _text(o["hint"]):

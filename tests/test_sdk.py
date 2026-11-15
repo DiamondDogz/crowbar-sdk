@@ -121,6 +121,25 @@ class CHelper(unittest.TestCase):
 
 
 class Check(unittest.TestCase):
+    def test_option_for_some_games(self):
+        base = dict(GOOD, settings="{data}/ps4rt.ini", titleIds=["CUSA00001", "CUSA00002"])
+        item = lambda games: {"key": "fps", "label": "Frame rate", "values": [["30", "30"], ["60", "60"]], "default": "30", **({"titleIds": games} if games is not None else {})}
+        def run(manifest):
+            with tempfile.TemporaryDirectory() as d:
+                return check.run(make_runtime(Path(d), wired=True, manifest_data=manifest))
+        if True:
+            # The same key for two games: allowed with titleIds.
+            r = run(dict(base, options=[item(["CUSA00001"]), item(["CUSA00002"])]))
+            self.assertNotIn("options.duplicate", {f["code"] for f in r["errors"]})
+            self.assertNotIn("options.titleIds", {f["code"] for f in r["errors"]})
+            # Twice for every game: still an error.
+            r = run(dict(base, options=[item(None), item(None)]))
+            self.assertIn("options.duplicate", {f["code"] for f in r["errors"]})
+            r = run(dict(base, options=[item(["nope"])]))
+            self.assertIn("options.titleIds", {f["code"] for f in r["errors"]})
+            r = run(dict(base, options=[item(["CUSA09999"])]))
+            self.assertIn("options.titleIds-unknown", {w["code"] for w in r["warnings"]})
+
     def test_options(self):
         good = dict(GOOD, settings="{data}/ps4rt.ini", options=[
             {"key": "output_res", "label": {"en": "Output resolution", "fr": "Résolution"}, "values": [["1920x1080", "1080p"], ["3840x2160", "4K"]], "default": "1920x1080"},
